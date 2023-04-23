@@ -195,7 +195,5 @@ contract ImpactCardTest is Test {
         assertEq(cards.getAccumulatedFunds(2)[0], agoraBalance[1]);
         assertEq(cards.getAccumulatedFunds(5)[0], agoraBalance[2]);
         assertEq(cards.getAccumulatedFunds(10)[0], agoraBalance[3]);
-}
-
-
+    }
 }

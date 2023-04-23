@@ -245,5 +245,35 @@ contract ImpactCardTest is Test {
 
     }
 
+    function testUri() public {
+        vm.startPrank(dAgoraTreasury);
+            cards.togglePaused();
+            assertEq(cards.isPaused(), false);
+        vm.stopPrank();
+        vm.startPrank(alice);
+            uint256[] memory ids = new uint256[](4);
+            ids[0] = 1;
+            ids[1] = 2;
+            ids[2] = 5;
+            ids[3] = 10;
+            uint256[] memory amounts = new uint256[](4);
+            amounts[0] = 5;
+            amounts[1] = 3;
+            amounts[2] = 4;
+            amounts[3] = 2;
+
+            uint256 pricePer = 0.005 ether;
+            uint256 cost = (amounts[0] + amounts[1] + amounts[2] + amounts[3]) * pricePer;
+
+
+            // Alice mints a single card
+            cards.mintBatch{value: cost}(ids, amounts);
+
+            assertEq(cards.uri(ids[0]), "https://impactcards.io/api/cards/1.json");
+            assertEq(cards.uri(ids[1]), "https://impactcards.io/api/cards/2.json");
+            assertEq(cards.uri(ids[2]), "https://impactcards.io/api/cards/5.json");
+            assertEq(cards.uri(ids[3]), "https://impactcards.io/api/cards/10.json");            
+        vm.stopPrank();
+    }
 
 }

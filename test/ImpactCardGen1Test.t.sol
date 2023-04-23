@@ -388,6 +388,152 @@ contract ImpactCardTest is Test {
             assertEq(cards.balanceOf(alice, ids[0]), 0, 'Alice should have a balance of 0');
         vm.stopPrank();
     }
-    
-    
+        
+    function testTotalSupplyFunction() public {
+        vm.startPrank(alice);
+            uint256[] memory ids = new uint256[](4);
+            ids[0] = 1;
+            ids[1] = 2;
+            ids[2] = 5;
+            ids[3] = 10;
+            uint256[] memory amounts = new uint256[](4);
+            amounts[0] = 5;
+            amounts[1] = 3;
+            amounts[2] = 4;
+            amounts[3] = 2;
+
+            uint256 pricePer = 0.005 ether;
+            uint256 cost = (amounts[0] + amounts[1] + amounts[2] + amounts[3]) * pricePer;
+
+            // Alice mints a batch of cards
+            cards.mintBatch{value: cost}(ids, amounts);
+
+            assertEq(cards.totalSupply(ids[0]), amounts[0]);
+            assertEq(cards.totalSupply(ids[1]), amounts[1]);
+            assertEq(cards.totalSupply(ids[2]), amounts[2]);
+            assertEq(cards.totalSupply(ids[3]), amounts[3]);
+
+        vm.stopPrank();
+    }
+
+    function testMaxSupply() public {
+        vm.startPrank(dAgoraTreasury);
+            cards.setBulkBuyLimit(100);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+            uint256 totalSupply = cards.totalSupply(1);
+            uint256 maxSupply = cards.MAX_SUPPLY();
+            uint256 bulkBuyLimit = cards.bulkBuyLimit();
+                        
+            uint256 pricePer = 0.005 ether;
+            uint256 cost = bulkBuyLimit * pricePer;
+            for (uint256 i = 1; i <= 20; i++) {
+                cards.mint{value: cost}(1, 100);
+            }
+            
+            cost = 23 * pricePer;
+            cards.mint{value: cost}(1, 23);
+
+            totalSupply = cards.totalSupply(1);
+            assertEq(cards.totalSupply(1), maxSupply);
+            assertEq(cards.balanceOf(alice, 1), maxSupply);            
+        vm.stopPrank();        
+    }
+
+    function testFailMintOverMaxSupply() public {
+        vm.startPrank(dAgoraTreasury);
+            cards.setBulkBuyLimit(100);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+            uint256 totalSupply = cards.totalSupply(1);
+            uint256 maxSupply = cards.MAX_SUPPLY();
+            uint256 bulkBuyLimit = cards.bulkBuyLimit();
+                        
+            uint256 pricePer = 0.005 ether;
+            uint256 cost = bulkBuyLimit * pricePer;
+            for (uint256 i = 1; i <= 20; i++) {
+                cards.mint{value: cost}(1, 100);
+            }
+            
+            cost = 23 * pricePer;
+            cards.mint{value: cost}(1, 23);
+
+            totalSupply = cards.totalSupply(1);
+            assertEq(cards.totalSupply(1), maxSupply);
+            assertEq(cards.balanceOf(alice, 1), maxSupply);    
+            
+            cost = 1 * pricePer;
+            cards.mint{value: cost}(1, 1);
+            vm.expectRevert("Exceeds max supply");
+        vm.stopPrank();        
+    }
+
+    function testIsMintableFunction() public {
+        vm.startPrank(dAgoraTreasury);
+            // Mintable cards during season 1
+            for(uint256 i = 1; i<= 15; i++) {
+                assertEq(cards.isMintable(i), true, 'Cards should be mintable');
+            }
+            // Hidden cards should always be mintable
+            for(uint256 i = 57; i<= 60; i++) {
+                assertEq(cards.isMintable(i), true, 'Hidden cards should always be mintable');
+            }
+            // Non-mintable cards
+            for(uint256 i = 16; i<= 56; i++) {
+                assertEq(cards.isMintable(i), false, 'Cards should not be mintable');
+            }
+            
+            cards.nextSeason();
+
+            // Mintable cards during season 2
+            for(uint256 i = 1; i<= 29; i++) {
+                assertEq(cards.isMintable(i), true, 'Cards should be mintable');
+            }
+
+            // Non-mintable cards
+            for(uint256 i = 30; i<= 56; i++) {
+                assertEq(cards.isMintable(i), false, 'Cards should not be mintable');
+            }
+
+            // Hidden cards should always be mintable
+            for(uint256 i = 57; i<= 60; i++) {
+                assertEq(cards.isMintable(i), true, 'Hidden cards should always be mintable');
+            }
+
+            cards.nextSeason();
+
+            // Mintable cards during season 3
+            for(uint256 i = 1; i<= 43; i++) {
+                assertEq(cards.isMintable(i), true, 'Cards should be mintable');
+            }
+
+            // Non-mintable cards
+            for(uint256 i = 46; i<= 56; i++) {
+                assertEq(cards.isMintable(i), false, 'Cards should not be mintable');
+            }
+
+            // Hidden cards should always be mintable
+            for(uint256 i = 57; i<= 60; i++) {
+                assertEq(cards.isMintable(i), true, 'Hidden cards should always be mintable');
+            }
+
+            cards.nextSeason();
+
+            // Mintable cards during season 4
+            for(uint256 i = 1; i<= 56; i++) {
+                assertEq(cards.isMintable(i), true, 'Cards should be mintable');
+            }
+
+            // Hidden cards should always be mintable
+            for(uint256 i = 57; i<= 60; i++) {
+                assertEq(cards.isMintable(i), true, 'Hidden cards should always be mintable');
+            }
+
+            assertEq(cards.isMintable(61), false, 'Cards should not be mintable');
+        vm.stopPrank();
+    }
+
+
 }

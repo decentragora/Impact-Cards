@@ -38,6 +38,16 @@
 
         event CardMinted(uint256 tokenId, uint256 amount, address minter);
         event CardsBatchMinted(uint256[] tokenIds, uint256[] amounts, address minter);
+        event SeasonChanged(uint256 season);
+        event PayeeSet(uint256 tokenId, address[2] payees);
+        event SharesSet(uint256 tokenId, uint256[2] shares);
+        event FundsReleased(uint256 tokenId, address payee, uint256 amount);
+        event BulkBuyLimitSet(uint16 limit);
+        event MintPriceSet(uint256 price);
+        event BaseURIChanged(string baseURI);
+        event BaseExtensionChanged(string baseExtension);
+        event ChangedContractPausedState(bool isPaused);
+
 
         constructor() ERC1155("https://impactcards.io/api/cards/{id}.json") {
             isPaused = true;
@@ -62,7 +72,7 @@
         function mint(uint256 tokenId, uint256 amount) external payable nonReentrant isNotPaused withinLimit(amount) {
             require(tokenId >= 1 && tokenId <= 56, "Invalid tokenId");
             require(_isMintable(tokenId), "Token not mintable in the current season");
-            require(amount > 0 && amount <= MAX_SUPPLY - _totalMinted[tokenId], "Invalid amount");
+            require(amount > 0 && amount <= MAX_SUPPLY - _totalMinted[tokenId], "Exceeds max supply");
 
             uint256 totalPrice = mintPrice * amount;
             require(msg.value >= totalPrice, "Insufficient payment");
@@ -80,7 +90,7 @@
             require(tokenId.length == amount.length, "Invalid input");
             uint256 totalPrice = 0;
             for (uint256 i = 0; i < tokenId.length; i++) {
-                require(tokenId[i] >= 1 && tokenId[i] <= MAX_CARDS, "Invalid tokenId");
+                require(tokenId[i] >= 1 && tokenId[i] <= 56, "Invalid tokenId");
                 require(_isMintable(tokenId[i]), "Token not mintable in the current season");
                 require(amount[i] > 0 && amount[i] <= MAX_SUPPLY - _totalMinted[tokenId[i]], "Invalid amount");
                 require(amount[i] <= bulkBuyLimit, "Exceeds bulk buy limit");
@@ -97,28 +107,28 @@
             emit CardsBatchMinted(tokenId, amount, msg.sender);
         }
 
-        function mintHiddenCard(uint256 tokenId, uint256 amount, bytes calldata proof)
-            public
-            payable
-            nonReentrant
-            isNotPaused
-            withinLimit(amount)
-        {
-            require(tokenId >= 57 && tokenId <= MAX_CARDS, "Invalid tokenId");
-            require(_isMintable(tokenId), "Token not mintable in the current season");
-            require(amount > 0 && amount <= MAX_SUPPLY - _totalMinted[tokenId], "Invalid amount");
+        // function mintHiddenCard(uint256 tokenId, uint256 amount, bytes calldata proof)
+        //     public
+        //     payable
+        //     nonReentrant
+        //     isNotPaused
+        //     withinLimit(amount)
+        // {
+        //     require(tokenId >= 57 && tokenId <= MAX_CARDS, "Invalid tokenId");
+        //     require(_isMintable(tokenId), "Token not mintable in the current season");
+        //     require(amount > 0 && amount <= MAX_SUPPLY - _totalMinted[tokenId], "Invalid amount");
 
-            uint256 totalPrice = mintPrice * amount;
-            require(msg.value >= totalPrice, "Insufficient payment");
-            uint256 shareOfPay = msg.value / 2;
-            _accumulatedFunds[tokenId][0] += shareOfPay;
-            _accumulatedFunds[tokenId][1] += shareOfPay;
+        //     uint256 totalPrice = mintPrice * amount;
+        //     require(msg.value >= totalPrice, "Insufficient payment");
+        //     uint256 shareOfPay = msg.value / 2;
+        //     _accumulatedFunds[tokenId][0] += shareOfPay;
+        //     _accumulatedFunds[tokenId][1] += shareOfPay;
 
-            _totalMinted[tokenId] += amount;
-            _mint(msg.sender, tokenId, amount, proof);
+        //     _totalMinted[tokenId] += amount;
+        //     _mint(msg.sender, tokenId, amount, proof);
 
-            emit CardMinted(tokenId, amount, msg.sender);
-        }
+        //     emit CardMinted(tokenId, amount, msg.sender);
+        // }
 
         function setCardProperties(uint256 tokenId, string calldata name, string calldata description, uint256 season)
             external
@@ -141,6 +151,8 @@
             require(payees.length == 2 && shares.length == 2, "Invalid payees or shares");
             _payee[tokenId] = payees;
             _shares[tokenId] = shares;
+            emit PayeeSet(tokenId, [payees[0], payees[1]]);
+            emit SharesSet(tokenId, [shares[0], shares[1]]);
         }
 
         function release(uint256 tokenId, uint8 payeeIndex)
@@ -157,37 +169,40 @@
             _accumulatedFunds[tokenId][payeeIndex] = 0;
             _totalReceived[payee] += amount;
             payable(payee).transfer(amount);
+            emit FundsReleased(tokenId, payee, amount);
         }
 
         function nextSeason() external onlyOwner {
             require(currentSeason < 4, "All seasons have been activated");
             currentSeason++;
+            emit SeasonChanged(currentSeason);
         }
 
         function setMintPrice(uint256 price) external onlyOwner {
             mintPrice = price;
+            emit MintPriceSet(price);
         }
 
         function setBulkBuyLimit(uint16 limit) external onlyOwner {
             require(limit > 0, "Limit cannot be zero");
             require(limit <= 100, "Limit cannot be more than 100");
             bulkBuyLimit = limit;
+            emit BulkBuyLimitSet(limit);
         }
 
         function setBaseURI(string calldata newuri) external onlyOwner {
             _uri = newuri;
+            emit BaseURIChanged(newuri);
         }
 
         function setBaseExtension(string calldata newExtension) external onlyOwner {
             _baseExtension = newExtension;
-        }
-
-        function emergencyWithdraw() external onlyOwner {
-            payable(msg.sender).transfer(address(this).balance);
+            emit BaseExtensionChanged(newExtension);
         }
 
         function togglePaused() external onlyOwner {
             isPaused = !isPaused;
+            emit ChangedContractPausedState(isPaused);
         }
 
         function getPayees(uint256 tokenId) external view returns (address[2] memory) {
@@ -203,11 +218,6 @@
         function getAccumulatedFunds(uint256 tokenId) external view returns (uint256[2] memory) {
             require(tokenId >= 1 && tokenId <= MAX_CARDS, "Invalid tokenId");
             return _accumulatedFunds[tokenId];
-        }
-
-        function totalReleased(address payee) external view returns (uint256) {
-            require(payee != address(0), "Invalid address");
-            return _totalReceived[payee];
         }
 
         function totalReleasedToPayee(address payee) external view returns (uint256) {
@@ -253,16 +263,6 @@
             }
             return false;
         }
-
-        function _isMintableHidden(uint256 tokenId, bytes calldata proof) private view returns (bool) {
-            for (uint8 i = 0; i < hiddenCardIds.length; i++) {
-                if (tokenId == hiddenCardIds[i]) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         function _beforeTokenTransfer(
             address operator,
             address from,

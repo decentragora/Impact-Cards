@@ -131,6 +131,12 @@ contract ImpactCardTest is Test {
 
     function testSetupPayees() public {
         vm.startPrank(dAgoraTreasury);
+            // Set Payees for season one of Impact Cards
+            for (uint256 i = 1; i <= 15; i++) {
+                address[15] memory allPayees = [ ag, er, jl, jb, ko, sn, gt, fv, op, zx, sc, rb, ed, ef, pc ];
+                cards.setPayees(i, [dAgoraTreasury, allPayees[i-1]], [uint256(50), uint256(50)]);
+            }
+
             for (uint256 i = 1; i <= 15; i++) {
                 address[15] memory allPayees = [ ag, er, jl, jb, ko, sn, gt, fv, op, zx, sc, rb, ed, ef, pc ];
                 address[2] memory payees = cards.getPayees(i);
