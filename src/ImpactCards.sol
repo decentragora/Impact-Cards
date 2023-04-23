@@ -2,21 +2,16 @@
     pragma solidity ^0.8.19;
 
     import {ERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol";
-    import {ERC1155Burnable} from "openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
     import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
     import {ReentrancyGuard} from "openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
     import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
 
-    contract ImpactCards_Gen1 is ERC1155, Ownable, ReentrancyGuard, ERC1155Burnable {
-        struct Card {
-            string name;
-            string description;
-            uint256 season;
-        }
+    contract ImpactCards_Gen1 is ERC1155, Ownable, ReentrancyGuard {
 
         bool public isPaused;
-
+        string public name = "Impact Cards";
+        string public symbol = "IMPACT";
         string public _uri = "https://impactcards.io/api/cards/";
         string public _baseExtension = ".json";
         uint16 public bulkBuyLimit = 5;
@@ -30,8 +25,6 @@
         mapping(uint256 => uint256[2]) private _shares;
         mapping(address => uint256) private _totalReceived;
         mapping(uint256 => uint256[2]) private _accumulatedFunds;
-
-        mapping(uint256 => Card) private _cards;
 
         uint8[] public seasonCardCounts = [15, 14, 14, 13];
         uint8[] public hiddenCardIds = [57, 58, 59, 60];
@@ -69,7 +62,7 @@
             _;
         }
 
-        function mint(uint256 tokenId, uint256 amount) external payable nonReentrant isNotPaused withinLimit(amount) {
+        function mint(uint256 tokenId, uint256 amount) public payable nonReentrant isNotPaused withinLimit(amount) {
             require(tokenId >= 1 && tokenId <= 56, "Invalid tokenId");
             require(_isMintable(tokenId), "Token not mintable in the current season");
             require(amount > 0 && amount <= MAX_SUPPLY - _totalMinted[tokenId], "Exceeds max supply");
@@ -86,7 +79,7 @@
             emit CardMinted(tokenId, amount, msg.sender);
         }
 
-        function mintBatch(uint256[] calldata tokenId, uint256[] calldata amount) external payable nonReentrant isNotPaused {
+        function mintBatch(uint256[] calldata tokenId, uint256[] calldata amount) public payable nonReentrant isNotPaused {
             require(tokenId.length == amount.length, "Invalid input");
             uint256 totalPrice = 0;
             for (uint256 i = 0; i < tokenId.length; i++) {
@@ -130,20 +123,7 @@
         //     emit CardMinted(tokenId, amount, msg.sender);
         // }
 
-        function setCardProperties(uint256 tokenId, string calldata name, string calldata description, uint256 season)
-            external
-            onlyOwner
-        {
-            require(tokenId >= 1 && tokenId <= MAX_CARDS, "Invalid tokenId");
-            _cards[tokenId] = Card(name, description, season);
-        }
-
-        function getCardProperties(uint256 tokenId) external view returns (Card memory) {
-            require(tokenId >= 1 && tokenId <= MAX_CARDS, "Invalid tokenId");
-            return _cards[tokenId];
-        }
-
-        function setPayees(uint256 tokenId, address[2] calldata payees, uint256[2] calldata shares) external onlyOwner {
+        function setPayees(uint256 tokenId, address[2] memory payees, uint256[2] memory shares) public onlyOwner {
             require(tokenId >= 1 && tokenId <= MAX_CARDS, "Invalid tokenId");
             require(shares[0] + shares[1] == 100, "Shares should add up to 100%");
             require(payees[0] != address(0) && payees[1] != address(0), "Payees cannot be zero address");

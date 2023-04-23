@@ -99,25 +99,6 @@ contract ImpactCardTest is Test {
                 assertEq(shares[0], 50);
                 assertEq(shares[1], 50);
             }
-
-
-            // Set the Season one Card Parameters.
-            cards.setCardProperties(1, 'Austin Griffith', 'Description', 1);
-            cards.setCardProperties(2, 'Eth Rank', 'Description', 1);
-            cards.setCardProperties(3, 'Joseph Lubin', 'Description', 1);
-            cards.setCardProperties(4, 'Juan Benet', 'Description', 1);
-            cards.setCardProperties(5, 'Kevin Owocki', 'Description', 1);
-            cards.setCardProperties(6, 'Satoshi Nakamoto', 'Description', 1);
-            cards.setCardProperties(7, 'Guild XYZ Team', 'Description', 1);
-            cards.setCardProperties(8, 'Futureverse', 'Description', 1);
-            cards.setCardProperties(9, 'Optimism', 'Description', 1);
-            cards.setCardProperties(10, 'ZachXBT', 'Description', 1);
-            cards.setCardProperties(11, 'Stephen Chavez', 'Description', 1);
-            cards.setCardProperties(12, 'Rommel Brito', 'Description', 1);
-            cards.setCardProperties(13, 'Ethereum Denver', 'Description', 1);
-            cards.setCardProperties(14, 'Ethereum Foundation', 'Description', 1);
-            cards.setCardProperties(15, 'Patrick Collins', 'Description', 1);
-
             // Toggle pause
             cards.togglePaused();
         vm.stopPrank();
