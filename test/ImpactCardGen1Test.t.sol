@@ -454,59 +454,39 @@ contract ImpactCardTest is Test {
         for (uint256 i = 1; i <= 15; i++) {
             assertEq(cards.isMintable(i), true, "Cards should be mintable");
         }
-        // Hidden cards should always be mintable
-        for (uint256 i = 57; i <= 60; i++) {
-            assertEq(cards.isMintable(i), true, "Hidden cards should always be mintable");
-        }
         // Non-mintable cards
-        for (uint256 i = 16; i <= 56; i++) {
+        for (uint256 i = 16; i <= 60; i++) {
             assertEq(cards.isMintable(i), false, "Cards should not be mintable");
         }
 
         cards.nextSeason();
 
         // Mintable cards during season 2
-        for (uint256 i = 1; i <= 29; i++) {
+        for (uint256 i = 1; i <= 30; i++) {
             assertEq(cards.isMintable(i), true, "Cards should be mintable");
         }
 
         // Non-mintable cards
-        for (uint256 i = 30; i <= 56; i++) {
+        for (uint256 i = 31; i <= 60; i++) {
             assertEq(cards.isMintable(i), false, "Cards should not be mintable");
-        }
-
-        // Hidden cards should always be mintable
-        for (uint256 i = 57; i <= 60; i++) {
-            assertEq(cards.isMintable(i), true, "Hidden cards should always be mintable");
         }
 
         cards.nextSeason();
 
         // Mintable cards during season 3
-        for (uint256 i = 1; i <= 43; i++) {
+        for (uint256 i = 1; i <= 45; i++) {
             assertEq(cards.isMintable(i), true, "Cards should be mintable");
         }
 
         // Non-mintable cards
-        for (uint256 i = 46; i <= 56; i++) {
+        for (uint256 i = 46; i <= 60; i++) {
             assertEq(cards.isMintable(i), false, "Cards should not be mintable");
         }
-
-        // Hidden cards should always be mintable
-        for (uint256 i = 57; i <= 60; i++) {
-            assertEq(cards.isMintable(i), true, "Hidden cards should always be mintable");
-        }
-
         cards.nextSeason();
 
         // Mintable cards during season 4
-        for (uint256 i = 1; i <= 56; i++) {
+        for (uint256 i = 1; i <= 60; i++) {
             assertEq(cards.isMintable(i), true, "Cards should be mintable");
-        }
-
-        // Hidden cards should always be mintable
-        for (uint256 i = 57; i <= 60; i++) {
-            assertEq(cards.isMintable(i), true, "Hidden cards should always be mintable");
         }
 
         assertEq(cards.isMintable(61), false, "Cards should not be mintable");

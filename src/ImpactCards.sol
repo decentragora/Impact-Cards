@@ -44,9 +44,8 @@ contract ImpactCards_Gen1 is ERC1155, Ownable, ReentrancyGuard {
     mapping(uint256 => uint256[2]) private _accumulatedFunds;
 
     /// @dev An array containing the number of cards in each season.
-    uint8[] public seasonCardCounts = [15, 14, 14, 13];
+    uint8[] public seasonCardCounts = [15, 15, 15, 15];
     /// @dev An array containing the token IDs of the hidden cards.
-    uint8[] public hiddenCardIds = [57, 58, 59, 60];
 
     /// @notice Emitted when a card is minted.
     event CardMinted(uint256 tokenId, uint256 amount, address minter);
@@ -112,7 +111,6 @@ contract ImpactCards_Gen1 is ERC1155, Ownable, ReentrancyGuard {
 
         _totalMinted[tokenId] += amount;
         _mint(msg.sender, tokenId, amount, "");
-
         emit CardMinted(tokenId, amount, msg.sender);
     }
 
@@ -141,29 +139,6 @@ contract ImpactCards_Gen1 is ERC1155, Ownable, ReentrancyGuard {
         _mintBatch(msg.sender, tokenId, amount, "");
         emit CardsBatchMinted(tokenId, amount, msg.sender);
     }
-
-    // function mintHiddenCard(uint256 tokenId, uint256 amount, bytes calldata proof)
-    //     public
-    //     payable
-    //     nonReentrant
-    //     isNotPaused
-    //     withinLimit(amount)
-    // {
-    //     require(tokenId >= 57 && tokenId <= MAX_CARDS, "Invalid tokenId");
-    //     require(_isMintable(tokenId), "Token not mintable in the current season");
-    //     require(amount > 0 && amount <= MAX_SUPPLY - _totalMinted[tokenId], "Invalid amount");
-
-    //     uint256 totalPrice = mintPrice * amount;
-    //     require(msg.value >= totalPrice, "Insufficient payment");
-    //     uint256 shareOfPay = msg.value / 2;
-    //     _accumulatedFunds[tokenId][0] += shareOfPay;
-    //     _accumulatedFunds[tokenId][1] += shareOfPay;
-
-    //     _totalMinted[tokenId] += amount;
-    //     _mint(msg.sender, tokenId, amount, proof);
-
-    //     emit CardMinted(tokenId, amount, msg.sender);
-    // }
 
     /// @notice Allows the owner to set a tokenId's payees.
     /// @param tokenId The ID of the card to be updated.
@@ -312,14 +287,8 @@ contract ImpactCards_Gen1 is ERC1155, Ownable, ReentrancyGuard {
             return true;
         } else if (currentSeason == 3 && tokenId <= seasonCardCounts[0] + seasonCardCounts[1] + seasonCardCounts[2]) {
             return true;
-        } else if (currentSeason == 4 && tokenId <= MAX_CARDS - hiddenCardIds.length) {
+        } else if (currentSeason == 4 && tokenId <= MAX_CARDS) {
             return true;
-        } else {
-            for (uint8 i = 0; i < hiddenCardIds.length; i++) {
-                if (tokenId == hiddenCardIds[i]) {
-                    return true;
-                }
-            }
         }
         return false;
     }
