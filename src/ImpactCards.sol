@@ -222,6 +222,23 @@ contract ImpactCards_Gen1 is ERC1155, Ownable, ReentrancyGuard {
         emit ChangedContractPausedState(isPaused);
     }
 
+    /// @notice Only owner function to pay out all accumulated funds to all payees.
+    /// @dev This function is only callable by the owner, and will pay out all accumulated funds to all payees.
+    function releaseToAllPayees() public onlyOwner nonReentrant isNotPaused {
+        for (uint256 i = 1; i <= MAX_CARDS; i++) {
+            for (uint256 j = 0; j < 2; j++) {
+                address payee = _payee[i][j];
+                uint256 amount = _accumulatedFunds[i][j];
+                if (amount > 0) {
+                    _accumulatedFunds[i][j] = 0;
+                    _totalReceived[payee] += amount;
+                    payable(payee).transfer(amount);
+                    emit FundsReleased(i, payee, amount);
+                }
+            }
+        }
+    }
+
     /// @notice Gets the payees addresses for a given tokenId.
     /// @param tokenId The ID of the card to fetch.
     /// @return An array containing the addresses of the payees.

@@ -31,27 +31,27 @@
             <td class="headerValue">lcov.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
-            <td class="headerCovTableEntry">89</td>
-            <td class="headerCovTableEntry">100</td>
-            <td class="headerCovTableEntryMed">89.0 %</td>
+            <td class="headerCovTableEntry">91</td>
+            <td class="headerCovTableEntry">91</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-04-22 23:10:43</td>
+            <td class="headerValue">2023-04-30 20:27:19</td>
             <td></td>
             <td class="headerItem">Functions:</td>
-            <td class="headerCovTableEntry">21</td>
-            <td class="headerCovTableEntry">22</td>
-            <td class="headerCovTableEntryHi">95.5 %</td>
+            <td class="headerCovTableEntry">20</td>
+            <td class="headerCovTableEntry">20</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
           </tr>
           <tr>
             <td></td>
             <td></td>
             <td></td>
             <td class="headerItem">Branches:</td>
-            <td class="headerCovTableEntry">38</td>
-            <td class="headerCovTableEntry">74</td>
-            <td class="headerCovTableEntryLo">51.4 %</td>
+            <td class="headerCovTableEntry">35</td>
+            <td class="headerCovTableEntry">62</td>
+            <td class="headerCovTableEntryLo">56.5 %</td>
           </tr>
           <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
         </table>
@@ -69,282 +69,338 @@
       <td>
 <pre class="sourceHeading">           Branch data     Line data    Source code</pre>
 <pre class="source">
-<a name="1"><span class="lineNum">       1 </span>                :            :         // SPDX-License-Identifier: MIT</a>
-<a name="2"><span class="lineNum">       2 </span>                :            :     pragma solidity ^0.8.19;</a>
+<a name="1"><span class="lineNum">       1 </span>                :            : // SPDX-License-Identifier: MIT</a>
+<a name="2"><span class="lineNum">       2 </span>                :            : pragma solidity ^0.8.19;</a>
 <a name="3"><span class="lineNum">       3 </span>                :            : </a>
-<a name="4"><span class="lineNum">       4 </span>                :            :     import {ERC1155} from &quot;openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol&quot;;</a>
-<a name="5"><span class="lineNum">       5 </span>                :            :     import {ERC1155Burnable} from &quot;openzeppelin-contracts/contracts/token/ERC1155/extensions/ERC1155Burnable.sol&quot;;</a>
-<a name="6"><span class="lineNum">       6 </span>                :            :     import {Ownable} from &quot;openzeppelin-contracts/contracts/access/Ownable.sol&quot;;</a>
-<a name="7"><span class="lineNum">       7 </span>                :            :     import {ReentrancyGuard} from &quot;openzeppelin-contracts/contracts/security/ReentrancyGuard.sol&quot;;</a>
-<a name="8"><span class="lineNum">       8 </span>                :            :     import {Strings} from &quot;openzeppelin-contracts/contracts/utils/Strings.sol&quot;;</a>
-<a name="9"><span class="lineNum">       9 </span>                :            : </a>
-<a name="10"><span class="lineNum">      10 </span>                :            : </a>
-<a name="11"><span class="lineNum">      11 </span>                :            :     contract ImpactCards_Gen1 is ERC1155, Ownable, ReentrancyGuard, ERC1155Burnable {</a>
-<a name="12"><span class="lineNum">      12 </span>                :            :         struct Card {</a>
-<a name="13"><span class="lineNum">      13 </span>                :            :             string name;</a>
-<a name="14"><span class="lineNum">      14 </span>                :            :             string description;</a>
-<a name="15"><span class="lineNum">      15 </span>                :            :             uint256 season;</a>
-<a name="16"><span class="lineNum">      16 </span>                :            :         }</a>
-<a name="17"><span class="lineNum">      17 </span>                :            : </a>
-<a name="18"><span class="lineNum">      18 </span>                :            :         bool public isPaused;</a>
-<a name="19"><span class="lineNum">      19 </span>                :            : </a>
-<a name="20"><span class="lineNum">      20 </span>                :            :         string public _uri = &quot;https://impactcards.io/api/cards/&quot;;</a>
-<a name="21"><span class="lineNum">      21 </span>                :            :         string public _baseExtension = &quot;.json&quot;;</a>
-<a name="22"><span class="lineNum">      22 </span>                :            :         uint16 public bulkBuyLimit = 5;</a>
-<a name="23"><span class="lineNum">      23 </span>                :            :         uint256 public constant MAX_CARDS = 60;</a>
-<a name="24"><span class="lineNum">      24 </span>                :            :         uint256 public constant MAX_SUPPLY = 2023;</a>
-<a name="25"><span class="lineNum">      25 </span>                :            :         uint256 public mintPrice = 5 * 10 ** 15; // 0.005 ETH</a>
-<a name="26"><span class="lineNum">      26 </span>                :            :         uint256 public currentSeason = 1;</a>
-<a name="27"><span class="lineNum">      27 </span>                :            : </a>
-<a name="28"><span class="lineNum">      28 </span>                :            :         mapping(uint256 =&gt; uint256) private _totalMinted;</a>
-<a name="29"><span class="lineNum">      29 </span>                :            :         mapping(uint256 =&gt; address[2]) private _payee;</a>
-<a name="30"><span class="lineNum">      30 </span>                :            :         mapping(uint256 =&gt; uint256[2]) private _shares;</a>
-<a name="31"><span class="lineNum">      31 </span>                :            :         mapping(address =&gt; uint256) private _totalReceived;</a>
-<a name="32"><span class="lineNum">      32 </span>                :            :         mapping(uint256 =&gt; uint256[2]) private _accumulatedFunds;</a>
-<a name="33"><span class="lineNum">      33 </span>                :            : </a>
-<a name="34"><span class="lineNum">      34 </span>                :            :         mapping(uint256 =&gt; Card) private _cards;</a>
-<a name="35"><span class="lineNum">      35 </span>                :            : </a>
-<a name="36"><span class="lineNum">      36 </span>                :            :         uint8[] public seasonCardCounts = [15, 14, 14, 13];</a>
-<a name="37"><span class="lineNum">      37 </span>                :            :         uint8[] public hiddenCardIds = [57, 58, 59, 60];</a>
-<a name="38"><span class="lineNum">      38 </span>                :            : </a>
-<a name="39"><span class="lineNum">      39 </span>                :            :         event CardMinted(uint256 tokenId, uint256 amount, address minter);</a>
-<a name="40"><span class="lineNum">      40 </span>                :            :         event CardsBatchMinted(uint256[] tokenIds, uint256[] amounts, address minter);</a>
-<a name="41"><span class="lineNum">      41 </span>                :            :         event SeasonChanged(uint256 season);</a>
-<a name="42"><span class="lineNum">      42 </span>                :            :         event PayeeSet(uint256 tokenId, address[2] payees);</a>
-<a name="43"><span class="lineNum">      43 </span>                :            :         event SharesSet(uint256 tokenId, uint256[2] shares);</a>
-<a name="44"><span class="lineNum">      44 </span>                :            :         event FundsReleased(uint256 tokenId, address payee, uint256 amount);</a>
-<a name="45"><span class="lineNum">      45 </span>                :            :         event BulkBuyLimitSet(uint16 limit);</a>
-<a name="46"><span class="lineNum">      46 </span>                :            :         event MintPriceSet(uint256 price);</a>
-<a name="47"><span class="lineNum">      47 </span>                :            :         event BaseURIChanged(string baseURI);</a>
-<a name="48"><span class="lineNum">      48 </span>                :            :         event BaseExtensionChanged(string baseExtension);</a>
-<a name="49"><span class="lineNum">      49 </span>                :            :         event ChangedContractPausedState(bool isPaused);</a>
-<a name="50"><span class="lineNum">      50 </span>                :            : </a>
-<a name="51"><span class="lineNum">      51 </span>                :            : </a>
-<a name="52"><span class="lineNum">      52 </span>                :            :         constructor() ERC1155(&quot;https://impactcards.io/api/cards/{id}.json&quot;) {</a>
-<a name="53"><span class="lineNum">      53 </span>                :            :             isPaused = true;</a>
-<a name="54"><span class="lineNum">      54 </span>                :            :         }</a>
-<a name="55"><span class="lineNum">      55 </span>                :            : </a>
-<a name="56"><span class="lineNum">      56 </span>                :            :         modifier isNotPaused() {</a>
-<a name="57"><span class="lineNum">      57 </span>                :            :             require(!isPaused, &quot;Contract is paused&quot;);</a>
-<a name="58"><span class="lineNum">      58 </span>                :            :             _;</a>
-<a name="59"><span class="lineNum">      59 </span>                :            :         }</a>
-<a name="60"><span class="lineNum">      60 </span>                :            : </a>
-<a name="61"><span class="lineNum">      61 </span>                :            :         modifier withinLimit(uint256 amount) {</a>
-<a name="62"><span class="lineNum">      62 </span>                :            :             require(amount &lt;= bulkBuyLimit, &quot;Exceeds bulk buy limit&quot;);</a>
-<a name="63"><span class="lineNum">      63 </span>                :            :             _;</a>
-<a name="64"><span class="lineNum">      64 </span>                :            :         }</a>
-<a name="65"><span class="lineNum">      65 </span>                :            : </a>
-<a name="66"><span class="lineNum">      66 </span>                :            :         modifier onlyPayee(uint256 tokenId, uint8 payeeIndex) {</a>
-<a name="67"><span class="lineNum">      67 </span>                :            :             require(payeeIndex == 0 || payeeIndex == 1, &quot;Invalid payee index&quot;);</a>
-<a name="68"><span class="lineNum">      68 </span>                :            :             require(msg.sender == _payee[tokenId][payeeIndex], &quot;Not authorized&quot;);</a>
-<a name="69"><span class="lineNum">      69 </span>                :            :             _;</a>
-<a name="70"><span class="lineNum">      70 </span>                :            :         }</a>
-<a name="71"><span class="lineNum">      71 </span>                :            : </a>
-<a name="72"><span class="lineNum">      72 </span>                :            :         function mint(uint256 tokenId, uint256 amount) external payable nonReentrant isNotPaused withinLimit(amount) {</a>
-<a name="73"><span class="lineNum">      73 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 23 times"> + </span>]:<span class="lineCov">         23 :             require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= 56, &quot;Invalid tokenId&quot;);</span></a>
-<a name="74"><span class="lineNum">      74 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 23 times"> + </span>]:<span class="lineCov">         23 :             require(_isMintable(tokenId), &quot;Token not mintable in the current season&quot;);</span></a>
-<a name="75"><span class="lineNum">      75 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 23 times"> + </span>]:<span class="lineCov">         23 :             require(amount &gt; 0 &amp;&amp; amount &lt;= MAX_SUPPLY - _totalMinted[tokenId], &quot;Exceeds max supply&quot;);</span></a>
-<a name="76"><span class="lineNum">      76 </span>                :            : </a>
-<a name="77"><span class="lineNum">      77 </span>                :<span class="lineCov">         23 :             uint256 totalPrice = mintPrice * amount;</span></a>
-<a name="78"><span class="lineNum">      78 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 23 times"> + </span>]:<span class="lineCov">         23 :             require(msg.value &gt;= totalPrice, &quot;Insufficient payment&quot;);</span></a>
-<a name="79"><span class="lineNum">      79 </span>                :<span class="lineCov">         23 :             uint256 shareOfPay = msg.value / 2;</span></a>
-<a name="80"><span class="lineNum">      80 </span>                :<span class="lineCov">         23 :             _accumulatedFunds[tokenId][0] += shareOfPay;</span></a>
-<a name="81"><span class="lineNum">      81 </span>                :<span class="lineCov">         23 :             _accumulatedFunds[tokenId][1] += shareOfPay;</span></a>
-<a name="82"><span class="lineNum">      82 </span>                :            : </a>
-<a name="83"><span class="lineNum">      83 </span>                :<span class="lineCov">         23 :             _totalMinted[tokenId] += amount;</span></a>
-<a name="84"><span class="lineNum">      84 </span>                :<span class="lineCov">         23 :             _mint(msg.sender, tokenId, amount, &quot;&quot;);</span></a>
-<a name="85"><span class="lineNum">      85 </span>                :            : </a>
-<a name="86"><span class="lineNum">      86 </span>                :<span class="lineCov">         23 :             emit CardMinted(tokenId, amount, msg.sender);</span></a>
-<a name="87"><span class="lineNum">      87 </span>                :            :         }</a>
-<a name="88"><span class="lineNum">      88 </span>                :            : </a>
-<a name="89"><span class="lineNum">      89 </span>                :            :         function mintBatch(uint256[] calldata tokenId, uint256[] calldata amount) external payable nonReentrant isNotPaused {</a>
-<a name="90"><span class="lineNum">      90 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 4 times"> + </span>]:<span class="lineCov">          4 :             require(tokenId.length == amount.length, &quot;Invalid input&quot;);</span></a>
-<a name="91"><span class="lineNum">      91 </span>                :<span class="lineCov">          4 :             uint256 totalPrice = 0;</span></a>
-<a name="92"><span class="lineNum">      92 </span>                :<span class="lineCov">          4 :             for (uint256 i = 0; i &lt; tokenId.length; i++) {</span></a>
-<a name="93"><span class="lineNum">      93 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 22 times"> + </span>]:<span class="lineCov">         22 :                 require(tokenId[i] &gt;= 1 &amp;&amp; tokenId[i] &lt;= 56, &quot;Invalid tokenId&quot;);</span></a>
-<a name="94"><span class="lineNum">      94 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 22 times"> + </span>]:<span class="lineCov">         22 :                 require(_isMintable(tokenId[i]), &quot;Token not mintable in the current season&quot;);</span></a>
-<a name="95"><span class="lineNum">      95 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 22 times"> + </span>]:<span class="lineCov">         22 :                 require(amount[i] &gt; 0 &amp;&amp; amount[i] &lt;= MAX_SUPPLY - _totalMinted[tokenId[i]], &quot;Invalid amount&quot;);</span></a>
-<a name="96"><span class="lineNum">      96 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 22 times"> + </span>]:<span class="lineCov">         22 :                 require(amount[i] &lt;= bulkBuyLimit, &quot;Exceeds bulk buy limit&quot;);</span></a>
-<a name="97"><span class="lineNum">      97 </span>                :<span class="lineCov">         22 :                 _totalMinted[tokenId[i]] += amount[i];</span></a>
-<a name="98"><span class="lineNum">      98 </span>                :<span class="lineCov">         22 :                 uint256 idPrice = mintPrice * amount[i];</span></a>
-<a name="99"><span class="lineNum">      99 </span>                :<span class="lineCov">         22 :                 totalPrice += idPrice;</span></a>
-<a name="100"><span class="lineNum">     100 </span>                :<span class="lineCov">         22 :                 uint256 shareOfPay = idPrice / 2;</span></a>
-<a name="101"><span class="lineNum">     101 </span>                :<span class="lineCov">         22 :                 _accumulatedFunds[tokenId[i]][0] += shareOfPay;</span></a>
-<a name="102"><span class="lineNum">     102 </span>                :<span class="lineCov">         22 :                 _accumulatedFunds[tokenId[i]][1] += shareOfPay;</span></a>
-<a name="103"><span class="lineNum">     103 </span>                :            :             }</a>
-<a name="104"><span class="lineNum">     104 </span>                :            : </a>
-<a name="105"><span class="lineNum">     105 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 4 times"> + </span>]:<span class="lineCov">          4 :             require(msg.value &gt;= totalPrice, &quot;Insufficient payment&quot;);</span></a>
-<a name="106"><span class="lineNum">     106 </span>                :<span class="lineCov">          4 :             _mintBatch(msg.sender, tokenId, amount, &quot;&quot;);</span></a>
-<a name="107"><span class="lineNum">     107 </span>                :<span class="lineCov">          4 :             emit CardsBatchMinted(tokenId, amount, msg.sender);</span></a>
-<a name="108"><span class="lineNum">     108 </span>                :            :         }</a>
-<a name="109"><span class="lineNum">     109 </span>                :            : </a>
-<a name="110"><span class="lineNum">     110 </span>                :            :         function mintHiddenCard(uint256 tokenId, uint256 amount, bytes calldata proof)</a>
-<a name="111"><span class="lineNum">     111 </span>                :            :             public</a>
-<a name="112"><span class="lineNum">     112 </span>                :            :             payable</a>
-<a name="113"><span class="lineNum">     113 </span>                :            :             nonReentrant</a>
-<a name="114"><span class="lineNum">     114 </span>                :            :             isNotPaused</a>
-<a name="115"><span class="lineNum">     115 </span>                :            :             withinLimit(amount)</a>
-<a name="116"><span class="lineNum">     116 </span>                :            :         {</a>
-<a name="117"><span class="lineNum">     117 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchNoExec" title="Branch 1 was not executed"> # </span>]:<span class="lineNoCov">          0 :             require(tokenId &gt;= 57 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
-<a name="118"><span class="lineNum">     118 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchNoExec" title="Branch 1 was not executed"> # </span>]:<span class="lineNoCov">          0 :             require(_isMintable(tokenId), &quot;Token not mintable in the current season&quot;);</span></a>
-<a name="119"><span class="lineNum">     119 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchNoExec" title="Branch 1 was not executed"> # </span>]:<span class="lineNoCov">          0 :             require(amount &gt; 0 &amp;&amp; amount &lt;= MAX_SUPPLY - _totalMinted[tokenId], &quot;Invalid amount&quot;);</span></a>
-<a name="120"><span class="lineNum">     120 </span>                :            : </a>
-<a name="121"><span class="lineNum">     121 </span>                :<span class="lineNoCov">          0 :             uint256 totalPrice = mintPrice * amount;</span></a>
-<a name="122"><span class="lineNum">     122 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchNoExec" title="Branch 1 was not executed"> # </span>]:<span class="lineNoCov">          0 :             require(msg.value &gt;= totalPrice, &quot;Insufficient payment&quot;);</span></a>
-<a name="123"><span class="lineNum">     123 </span>                :<span class="lineNoCov">          0 :             uint256 shareOfPay = msg.value / 2;</span></a>
-<a name="124"><span class="lineNum">     124 </span>                :<span class="lineNoCov">          0 :             _accumulatedFunds[tokenId][0] += shareOfPay;</span></a>
-<a name="125"><span class="lineNum">     125 </span>                :<span class="lineNoCov">          0 :             _accumulatedFunds[tokenId][1] += shareOfPay;</span></a>
-<a name="126"><span class="lineNum">     126 </span>                :            : </a>
-<a name="127"><span class="lineNum">     127 </span>                :<span class="lineNoCov">          0 :             _totalMinted[tokenId] += amount;</span></a>
-<a name="128"><span class="lineNum">     128 </span>                :<span class="lineNoCov">          0 :             _mint(msg.sender, tokenId, amount, proof);</span></a>
-<a name="129"><span class="lineNum">     129 </span>                :            : </a>
-<a name="130"><span class="lineNum">     130 </span>                :<span class="lineNoCov">          0 :             emit CardMinted(tokenId, amount, msg.sender);</span></a>
-<a name="131"><span class="lineNum">     131 </span>                :            :         }</a>
-<a name="132"><span class="lineNum">     132 </span>                :            : </a>
-<a name="133"><span class="lineNum">     133 </span>                :            :         function setCardProperties(uint256 tokenId, string calldata name, string calldata description, uint256 season)</a>
-<a name="134"><span class="lineNum">     134 </span>                :            :             external</a>
-<a name="135"><span class="lineNum">     135 </span>                :            :             onlyOwner</a>
-<a name="136"><span class="lineNum">     136 </span>                :            :         {</a>
-<a name="137"><span class="lineNum">     137 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 1 time"> + </span>]:<span class="lineCov">          1 :             require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
-<a name="138"><span class="lineNum">     138 </span>                :<span class="lineCov">          1 :             _cards[tokenId] = Card(name, description, season);</span></a>
-<a name="139"><span class="lineNum">     139 </span>                :            :         }</a>
-<a name="140"><span class="lineNum">     140 </span>                :            : </a>
-<a name="141"><span class="lineNum">     141 </span>                :            :         function getCardProperties(uint256 tokenId) external view returns (Card memory) {</a>
-<a name="142"><span class="lineNum">     142 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 1 time"> + </span>]:<span class="lineCov">          1 :             require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
-<a name="143"><span class="lineNum">     143 </span>                :<span class="lineCov">          1 :             return _cards[tokenId];</span></a>
-<a name="144"><span class="lineNum">     144 </span>                :            :         }</a>
-<a name="145"><span class="lineNum">     145 </span>                :            : </a>
-<a name="146"><span class="lineNum">     146 </span>                :            :         function setPayees(uint256 tokenId, address[2] calldata payees, uint256[2] calldata shares) external onlyOwner {</a>
-<a name="147"><span class="lineNum">     147 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :             require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
-<a name="148"><span class="lineNum">     148 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :             require(shares[0] + shares[1] == 100, &quot;Shares should add up to 100%&quot;);</span></a>
-<a name="149"><span class="lineNum">     149 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :             require(payees[0] != address(0) &amp;&amp; payees[1] != address(0), &quot;Payees cannot be zero address&quot;);</span></a>
-<a name="150"><span class="lineNum">     150 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :             require(payees[0] != payees[1], &quot;Payees cannot be the same&quot;);</span></a>
-<a name="151"><span class="lineNum">     151 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :             require(payees.length == 2 &amp;&amp; shares.length == 2, &quot;Invalid payees or shares&quot;);</span></a>
-<a name="152"><span class="lineNum">     152 </span>                :<span class="lineCov">         15 :             _payee[tokenId] = payees;</span></a>
-<a name="153"><span class="lineNum">     153 </span>                :<span class="lineCov">         15 :             _shares[tokenId] = shares;</span></a>
-<a name="154"><span class="lineNum">     154 </span>                :<span class="lineCov">         15 :             emit PayeeSet(tokenId, [payees[0], payees[1]]);</span></a>
-<a name="155"><span class="lineNum">     155 </span>                :<span class="lineCov">         15 :             emit SharesSet(tokenId, [shares[0], shares[1]]);</span></a>
-<a name="156"><span class="lineNum">     156 </span>                :            :         }</a>
-<a name="157"><span class="lineNum">     157 </span>                :            : </a>
-<a name="158"><span class="lineNum">     158 </span>                :            :         function release(uint256 tokenId, uint8 payeeIndex)</a>
-<a name="159"><span class="lineNum">     159 </span>                :            :             external</a>
-<a name="160"><span class="lineNum">     160 </span>                :            :             nonReentrant</a>
-<a name="161"><span class="lineNum">     161 </span>                :            :             isNotPaused</a>
-<a name="162"><span class="lineNum">     162 </span>                :            :             onlyPayee(tokenId, payeeIndex)</a>
-<a name="163"><span class="lineNum">     163 </span>                :            :         {</a>
-<a name="164"><span class="lineNum">     164 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 4 times"> + </span>]:<span class="lineCov">          4 :             require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
-<a name="165"><span class="lineNum">     165 </span>                :<span class="lineCov">          4 :             address payee = _payee[tokenId][payeeIndex];</span></a>
-<a name="166"><span class="lineNum">     166 </span>                :<span class="lineCov">          4 :             uint256 amount = _accumulatedFunds[tokenId][payeeIndex];</span></a>
-<a name="167"><span class="lineNum">     167 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 4 times"> + </span>]:<span class="lineCov">          4 :             require(amount &gt; 0, &quot;No funds to release&quot;);</span></a>
-<a name="168"><span class="lineNum">     168 </span>                :            : </a>
-<a name="169"><span class="lineNum">     169 </span>                :<span class="lineCov">          4 :             _accumulatedFunds[tokenId][payeeIndex] = 0;</span></a>
-<a name="170"><span class="lineNum">     170 </span>                :<span class="lineCov">          4 :             _totalReceived[payee] += amount;</span></a>
-<a name="171"><span class="lineNum">     171 </span>                :<span class="lineCov">          4 :             payable(payee).transfer(amount);</span></a>
-<a name="172"><span class="lineNum">     172 </span>                :<span class="lineCov">          4 :             emit FundsReleased(tokenId, payee, amount);</span></a>
-<a name="173"><span class="lineNum">     173 </span>                :            :         }</a>
+<a name="4"><span class="lineNum">       4 </span>                :            : import {ERC1155} from &quot;openzeppelin-contracts/contracts/token/ERC1155/ERC1155.sol&quot;;</a>
+<a name="5"><span class="lineNum">       5 </span>                :            : import {Ownable} from &quot;openzeppelin-contracts/contracts/access/Ownable.sol&quot;;</a>
+<a name="6"><span class="lineNum">       6 </span>                :            : import {ReentrancyGuard} from &quot;openzeppelin-contracts/contracts/security/ReentrancyGuard.sol&quot;;</a>
+<a name="7"><span class="lineNum">       7 </span>                :            : import {Strings} from &quot;openzeppelin-contracts/contracts/utils/Strings.sol&quot;;</a>
+<a name="8"><span class="lineNum">       8 </span>                :            : </a>
+<a name="9"><span class="lineNum">       9 </span>                :            : /// @title ImpactCards_Gen1</a>
+<a name="10"><span class="lineNum">      10 </span>                :            : /// @author DecentrAgora</a>
+<a name="11"><span class="lineNum">      11 </span>                :            : /// @notice This contract is for the first generation of the Impact Cards project, a collectible NFT project with a purpose.</a>
+<a name="12"><span class="lineNum">      12 </span>                :            : /// @dev The contract inherits from OpenZeppelin's ERC1155, Ownable, and ReentrancyGuard contracts.</a>
+<a name="13"><span class="lineNum">      13 </span>                :            : contract ImpactCards_Gen1 is ERC1155, Ownable, ReentrancyGuard {</a>
+<a name="14"><span class="lineNum">      14 </span>                :            :     /// @notice Indicates if the contract is currently paused.</a>
+<a name="15"><span class="lineNum">      15 </span>                :            :     bool public isPaused;</a>
+<a name="16"><span class="lineNum">      16 </span>                :            :     /// @notice The name of the NFT collection.</a>
+<a name="17"><span class="lineNum">      17 </span>                :            :     string public name = &quot;Impact Cards&quot;;</a>
+<a name="18"><span class="lineNum">      18 </span>                :            :     /// @notice The symbol of the NFT collection.</a>
+<a name="19"><span class="lineNum">      19 </span>                :            :     string public symbol = &quot;IMPACT&quot;;</a>
+<a name="20"><span class="lineNum">      20 </span>                :            :     /// @notice The base URI for the metadata of the NFTs.</a>
+<a name="21"><span class="lineNum">      21 </span>                :            :     string public _uri = &quot;https://impactcards.io/api/cards/&quot;;</a>
+<a name="22"><span class="lineNum">      22 </span>                :            :     /// @notice The file extension for the metadata of the NFTs.</a>
+<a name="23"><span class="lineNum">      23 </span>                :            :     string public _baseExtension = &quot;.json&quot;;</a>
+<a name="24"><span class="lineNum">      24 </span>                :            :     /// @notice The maximum number of tokens that can be bought in a single transaction.</a>
+<a name="25"><span class="lineNum">      25 </span>                :            :     uint16 public bulkBuyLimit = 5;</a>
+<a name="26"><span class="lineNum">      26 </span>                :            :     /// @notice The maximum number of unique cards in the collection.</a>
+<a name="27"><span class="lineNum">      27 </span>                :            :     uint256 public constant MAX_CARDS = 60;</a>
+<a name="28"><span class="lineNum">      28 </span>                :            :     /// @notice The maximum supply of each card in the collection.</a>
+<a name="29"><span class="lineNum">      29 </span>                :            :     uint256 public constant MAX_SUPPLY = 2023;</a>
+<a name="30"><span class="lineNum">      30 </span>                :            :     /// @notice The price to mint a single card, denominated in gwei (1 ETH = 10**9 gwei).</a>
+<a name="31"><span class="lineNum">      31 </span>                :            :     uint256 public mintPrice = 5 * 10 ** 15; // 0.005 ETH</a>
+<a name="32"><span class="lineNum">      32 </span>                :            :     /// @notice The current season of the collection, which determines which cards are mintable.</a>
+<a name="33"><span class="lineNum">      33 </span>                :            :     uint256 public currentSeason = 1;</a>
+<a name="34"><span class="lineNum">      34 </span>                :            : </a>
+<a name="35"><span class="lineNum">      35 </span>                :            :     /// @dev Mapping to keep track of the total number of cards minted for each token ID.</a>
+<a name="36"><span class="lineNum">      36 </span>                :            :     mapping(uint256 =&gt; uint256) private _totalMinted;</a>
+<a name="37"><span class="lineNum">      37 </span>                :            :     /// @dev Mapping to store the two payees for each token ID.</a>
+<a name="38"><span class="lineNum">      38 </span>                :            :     mapping(uint256 =&gt; address[2]) private _payee;</a>
+<a name="39"><span class="lineNum">      39 </span>                :            :     /// @dev Mapping to store the share percentages for each payee of each token ID.</a>
+<a name="40"><span class="lineNum">      40 </span>                :            :     mapping(uint256 =&gt; uint256[2]) private _shares;</a>
+<a name="41"><span class="lineNum">      41 </span>                :            :     /// @dev Mapping to store the total accumulated funds released to each address.</a>
+<a name="42"><span class="lineNum">      42 </span>                :            :     mapping(address =&gt; uint256) private _totalReceived;</a>
+<a name="43"><span class="lineNum">      43 </span>                :            :     /// @dev Mapping to store the accumulated funds for each payee of each token ID.</a>
+<a name="44"><span class="lineNum">      44 </span>                :            :     mapping(uint256 =&gt; uint256[2]) private _accumulatedFunds;</a>
+<a name="45"><span class="lineNum">      45 </span>                :            : </a>
+<a name="46"><span class="lineNum">      46 </span>                :            :     /// @dev An array containing the number of cards in each season.</a>
+<a name="47"><span class="lineNum">      47 </span>                :            :     uint8[] public seasonCardCounts = [15, 15, 15, 15];</a>
+<a name="48"><span class="lineNum">      48 </span>                :            :     /// @dev An array containing the token IDs of the hidden cards.</a>
+<a name="49"><span class="lineNum">      49 </span>                :            : </a>
+<a name="50"><span class="lineNum">      50 </span>                :            :     /// @notice Emitted when a card is minted.</a>
+<a name="51"><span class="lineNum">      51 </span>                :            :     event CardMinted(uint256 tokenId, uint256 amount, address minter);</a>
+<a name="52"><span class="lineNum">      52 </span>                :            :     /// @notice Emitted when multiple cards are minted.</a>
+<a name="53"><span class="lineNum">      53 </span>                :            :     event CardsBatchMinted(uint256[] tokenIds, uint256[] amounts, address minter);</a>
+<a name="54"><span class="lineNum">      54 </span>                :            :     /// @notice Emitted when the season is changed.</a>
+<a name="55"><span class="lineNum">      55 </span>                :            :     event SeasonChanged(uint256 season);</a>
+<a name="56"><span class="lineNum">      56 </span>                :            :     /// @notice Emitted when the payees for a token ID are set.</a>
+<a name="57"><span class="lineNum">      57 </span>                :            :     event PayeeSet(uint256 tokenId, address[2] payees);</a>
+<a name="58"><span class="lineNum">      58 </span>                :            :     /// @notice Emitted when the share percentages for a token ID are set.</a>
+<a name="59"><span class="lineNum">      59 </span>                :            :     event SharesSet(uint256 tokenId, uint256[2] shares);</a>
+<a name="60"><span class="lineNum">      60 </span>                :            :     /// @notice Emitted when funds are released to a payee.</a>
+<a name="61"><span class="lineNum">      61 </span>                :            :     event FundsReleased(uint256 tokenId, address payee, uint256 amount);</a>
+<a name="62"><span class="lineNum">      62 </span>                :            :     /// @notice Emitted when the bulk buy limit is changed.</a>
+<a name="63"><span class="lineNum">      63 </span>                :            :     event BulkBuyLimitSet(uint16 limit);</a>
+<a name="64"><span class="lineNum">      64 </span>                :            :     /// @notice Emitted when the mint price is changed.</a>
+<a name="65"><span class="lineNum">      65 </span>                :            :     event MintPriceSet(uint256 price);</a>
+<a name="66"><span class="lineNum">      66 </span>                :            :     /// @notice Emitted when the base URI is changed.</a>
+<a name="67"><span class="lineNum">      67 </span>                :            :     event BaseURIChanged(string baseURI);</a>
+<a name="68"><span class="lineNum">      68 </span>                :            :     /// @notice Emitted when the base extension is changed.</a>
+<a name="69"><span class="lineNum">      69 </span>                :            :     event BaseExtensionChanged(string baseExtension);</a>
+<a name="70"><span class="lineNum">      70 </span>                :            :     /// @notice Emitted when the contract is paused or unpaused.</a>
+<a name="71"><span class="lineNum">      71 </span>                :            :     event ChangedContractPausedState(bool isPaused);</a>
+<a name="72"><span class="lineNum">      72 </span>                :            : </a>
+<a name="73"><span class="lineNum">      73 </span>                :            :     /// @notice Initializes the contract with the base URI for token metadata.</a>
+<a name="74"><span class="lineNum">      74 </span>                :            :     /// @dev The constructor also sets the contract state to paused.</a>
+<a name="75"><span class="lineNum">      75 </span>                :            :     constructor() ERC1155(&quot;https://impactcards.io/api/cards/{id}.json&quot;) {</a>
+<a name="76"><span class="lineNum">      76 </span>                :            :         isPaused = true;</a>
+<a name="77"><span class="lineNum">      77 </span>                :            :     }</a>
+<a name="78"><span class="lineNum">      78 </span>                :            : </a>
+<a name="79"><span class="lineNum">      79 </span>                :            :     /// @dev Modifier that requires the contract to not be paused.</a>
+<a name="80"><span class="lineNum">      80 </span>                :            :     modifier isNotPaused() {</a>
+<a name="81"><span class="lineNum">      81 </span>                :            :         require(!isPaused, &quot;Contract is paused&quot;);</a>
+<a name="82"><span class="lineNum">      82 </span>                :            :         _;</a>
+<a name="83"><span class="lineNum">      83 </span>                :            :     }</a>
+<a name="84"><span class="lineNum">      84 </span>                :            : </a>
+<a name="85"><span class="lineNum">      85 </span>                :            :     /// @dev Modifier that requires the given amount to be within the bulk buy limit.</a>
+<a name="86"><span class="lineNum">      86 </span>                :            :     modifier withinLimit(uint256 amount) {</a>
+<a name="87"><span class="lineNum">      87 </span>                :            :         require(amount &lt;= bulkBuyLimit, &quot;Exceeds bulk buy limit&quot;);</a>
+<a name="88"><span class="lineNum">      88 </span>                :            :         _;</a>
+<a name="89"><span class="lineNum">      89 </span>                :            :     }</a>
+<a name="90"><span class="lineNum">      90 </span>                :            : </a>
+<a name="91"><span class="lineNum">      91 </span>                :            :     /// @dev Modifier that requires the sender to be one of the specified payees for the given tokenId and payeeIndex.</a>
+<a name="92"><span class="lineNum">      92 </span>                :            :     modifier onlyPayee(uint256 tokenId, uint8 payeeIndex) {</a>
+<a name="93"><span class="lineNum">      93 </span>                :            :         require(payeeIndex == 0 || payeeIndex == 1, &quot;Invalid payee index&quot;);</a>
+<a name="94"><span class="lineNum">      94 </span>                :            :         require(msg.sender == _payee[tokenId][payeeIndex], &quot;Not authorized&quot;);</a>
+<a name="95"><span class="lineNum">      95 </span>                :            :         _;</a>
+<a name="96"><span class="lineNum">      96 </span>                :            :     }</a>
+<a name="97"><span class="lineNum">      97 </span>                :            : </a>
+<a name="98"><span class="lineNum">      98 </span>                :            :     /// @notice Mints a single card for the caller.</a>
+<a name="99"><span class="lineNum">      99 </span>                :            :     /// @dev The function ensures that the total supply of the card does not exceed the maximum supply.</a>
+<a name="100"><span class="lineNum">     100 </span>                :            :     /// @param tokenId The ID of the card to be minted.</a>
+<a name="101"><span class="lineNum">     101 </span>                :            :     function mint(uint256 tokenId, uint256 amount) public payable nonReentrant isNotPaused withinLimit(amount) {</a>
+<a name="102"><span class="lineNum">     102 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 23 times"> + </span>]:<span class="lineCov">         23 :         require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= 56, &quot;Invalid tokenId&quot;);</span></a>
+<a name="103"><span class="lineNum">     103 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 23 times"> + </span>]:<span class="lineCov">         23 :         require(_isMintable(tokenId), &quot;Token not mintable in the current season&quot;);</span></a>
+<a name="104"><span class="lineNum">     104 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 23 times"> + </span>]:<span class="lineCov">         23 :         require(amount &gt; 0 &amp;&amp; amount &lt;= MAX_SUPPLY - _totalMinted[tokenId], &quot;Exceeds max supply&quot;);</span></a>
+<a name="105"><span class="lineNum">     105 </span>                :            : </a>
+<a name="106"><span class="lineNum">     106 </span>                :<span class="lineCov">         23 :         uint256 totalPrice = mintPrice * amount;</span></a>
+<a name="107"><span class="lineNum">     107 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 23 times"> + </span>]:<span class="lineCov">         23 :         require(msg.value &gt;= totalPrice, &quot;Insufficient payment&quot;);</span></a>
+<a name="108"><span class="lineNum">     108 </span>                :<span class="lineCov">         23 :         uint256 shareOfPay = msg.value / 2;</span></a>
+<a name="109"><span class="lineNum">     109 </span>                :<span class="lineCov">         23 :         _accumulatedFunds[tokenId][0] += shareOfPay;</span></a>
+<a name="110"><span class="lineNum">     110 </span>                :<span class="lineCov">         23 :         _accumulatedFunds[tokenId][1] += shareOfPay;</span></a>
+<a name="111"><span class="lineNum">     111 </span>                :            : </a>
+<a name="112"><span class="lineNum">     112 </span>                :<span class="lineCov">         23 :         _totalMinted[tokenId] += amount;</span></a>
+<a name="113"><span class="lineNum">     113 </span>                :<span class="lineCov">         23 :         _mint(msg.sender, tokenId, amount, &quot;&quot;);</span></a>
+<a name="114"><span class="lineNum">     114 </span>                :<span class="lineCov">         23 :         emit CardMinted(tokenId, amount, msg.sender);</span></a>
+<a name="115"><span class="lineNum">     115 </span>                :            :     }</a>
+<a name="116"><span class="lineNum">     116 </span>                :            : </a>
+<a name="117"><span class="lineNum">     117 </span>                :            :     /// @notice Mints multiple cards for the caller.</a>
+<a name="118"><span class="lineNum">     118 </span>                :            :     /// @param tokenId A array containing the IDs of the cards to be minted.</a>
+<a name="119"><span class="lineNum">     119 </span>                :            :     /// @param amount A array containing the amounts of each card to be minted.</a>
+<a name="120"><span class="lineNum">     120 </span>                :            :     /// @dev The function ensures that the bulk buy limit, max supply, and mintable conditions are met.</a>
+<a name="121"><span class="lineNum">     121 </span>                :            :     /// @dev The function also ensures that the total price is paid and that the funds are distributed correctly.</a>
+<a name="122"><span class="lineNum">     122 </span>                :            :     function mintBatch(uint256[] calldata tokenId, uint256[] calldata amount) public payable nonReentrant isNotPaused {</a>
+<a name="123"><span class="lineNum">     123 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 4 times"> + </span>]:<span class="lineCov">          4 :         require(tokenId.length == amount.length, &quot;Invalid input&quot;);</span></a>
+<a name="124"><span class="lineNum">     124 </span>                :<span class="lineCov">          4 :         uint256 totalPrice = 0;</span></a>
+<a name="125"><span class="lineNum">     125 </span>                :<span class="lineCov">          4 :         for (uint256 i = 0; i &lt; tokenId.length; i++) {</span></a>
+<a name="126"><span class="lineNum">     126 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 22 times"> + </span>]:<span class="lineCov">         22 :             require(tokenId[i] &gt;= 1 &amp;&amp; tokenId[i] &lt;= 56, &quot;Invalid tokenId&quot;);</span></a>
+<a name="127"><span class="lineNum">     127 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 22 times"> + </span>]:<span class="lineCov">         22 :             require(_isMintable(tokenId[i]), &quot;Token not mintable in the current season&quot;);</span></a>
+<a name="128"><span class="lineNum">     128 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 22 times"> + </span>]:<span class="lineCov">         22 :             require(amount[i] &gt; 0 &amp;&amp; amount[i] &lt;= MAX_SUPPLY - _totalMinted[tokenId[i]], &quot;Invalid amount&quot;);</span></a>
+<a name="129"><span class="lineNum">     129 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 22 times"> + </span>]:<span class="lineCov">         22 :             require(amount[i] &lt;= bulkBuyLimit, &quot;Exceeds bulk buy limit&quot;);</span></a>
+<a name="130"><span class="lineNum">     130 </span>                :<span class="lineCov">         22 :             _totalMinted[tokenId[i]] += amount[i];</span></a>
+<a name="131"><span class="lineNum">     131 </span>                :<span class="lineCov">         22 :             uint256 idPrice = mintPrice * amount[i];</span></a>
+<a name="132"><span class="lineNum">     132 </span>                :<span class="lineCov">         22 :             totalPrice += idPrice;</span></a>
+<a name="133"><span class="lineNum">     133 </span>                :<span class="lineCov">         22 :             uint256 shareOfPay = idPrice / 2;</span></a>
+<a name="134"><span class="lineNum">     134 </span>                :<span class="lineCov">         22 :             _accumulatedFunds[tokenId[i]][0] += shareOfPay;</span></a>
+<a name="135"><span class="lineNum">     135 </span>                :<span class="lineCov">         22 :             _accumulatedFunds[tokenId[i]][1] += shareOfPay;</span></a>
+<a name="136"><span class="lineNum">     136 </span>                :            :         }</a>
+<a name="137"><span class="lineNum">     137 </span>                :            : </a>
+<a name="138"><span class="lineNum">     138 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 4 times"> + </span>]:<span class="lineCov">          4 :         require(msg.value &gt;= totalPrice, &quot;Insufficient payment&quot;);</span></a>
+<a name="139"><span class="lineNum">     139 </span>                :<span class="lineCov">          4 :         _mintBatch(msg.sender, tokenId, amount, &quot;&quot;);</span></a>
+<a name="140"><span class="lineNum">     140 </span>                :<span class="lineCov">          4 :         emit CardsBatchMinted(tokenId, amount, msg.sender);</span></a>
+<a name="141"><span class="lineNum">     141 </span>                :            :     }</a>
+<a name="142"><span class="lineNum">     142 </span>                :            : </a>
+<a name="143"><span class="lineNum">     143 </span>                :            :     /// @notice Allows the owner to set a tokenId's payees.</a>
+<a name="144"><span class="lineNum">     144 </span>                :            :     /// @param tokenId The ID of the card to be updated.</a>
+<a name="145"><span class="lineNum">     145 </span>                :            :     /// @param payees An array containing the addresses of the payees.</a>
+<a name="146"><span class="lineNum">     146 </span>                :            :     /// @param shares An array containing the shares of each payee.</a>
+<a name="147"><span class="lineNum">     147 </span>                :            :     function setPayees(uint256 tokenId, address[2] memory payees, uint256[2] memory shares) public onlyOwner {</a>
+<a name="148"><span class="lineNum">     148 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :         require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
+<a name="149"><span class="lineNum">     149 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :         require(shares[0] + shares[1] == 100, &quot;Shares should add up to 100%&quot;);</span></a>
+<a name="150"><span class="lineNum">     150 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :         require(payees[0] != address(0) &amp;&amp; payees[1] != address(0), &quot;Payees cannot be zero address&quot;);</span></a>
+<a name="151"><span class="lineNum">     151 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :         require(payees[0] != payees[1], &quot;Payees cannot be the same&quot;);</span></a>
+<a name="152"><span class="lineNum">     152 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :         require(payees.length == 2 &amp;&amp; shares.length == 2, &quot;Invalid payees or shares&quot;);</span></a>
+<a name="153"><span class="lineNum">     153 </span>                :<span class="lineCov">         15 :         _payee[tokenId] = payees;</span></a>
+<a name="154"><span class="lineNum">     154 </span>                :<span class="lineCov">         15 :         _shares[tokenId] = shares;</span></a>
+<a name="155"><span class="lineNum">     155 </span>                :<span class="lineCov">         15 :         emit PayeeSet(tokenId, [payees[0], payees[1]]);</span></a>
+<a name="156"><span class="lineNum">     156 </span>                :<span class="lineCov">         15 :         emit SharesSet(tokenId, [shares[0], shares[1]]);</span></a>
+<a name="157"><span class="lineNum">     157 </span>                :            :     }</a>
+<a name="158"><span class="lineNum">     158 </span>                :            : </a>
+<a name="159"><span class="lineNum">     159 </span>                :            :     /// @notice Allows the Payee to withdraw their accumulated funds.</a>
+<a name="160"><span class="lineNum">     160 </span>                :            :     /// @param tokenId The ID of the card to be updated.</a>
+<a name="161"><span class="lineNum">     161 </span>                :            :     /// @param payeeIndex The index of the payee to be updated. either 0 or 1.</a>
+<a name="162"><span class="lineNum">     162 </span>                :            :     /// @dev The function ensures that the tokenId, and payeeIndex are valid, as well as ensuring that the caller is the payee, and has accumulated funds to withdraw.</a>
+<a name="163"><span class="lineNum">     163 </span>                :            :     /// @dev Only allows payee to withdraw accumulated funds.</a>
+<a name="164"><span class="lineNum">     164 </span>                :            :     function release(uint256 tokenId, uint8 payeeIndex)</a>
+<a name="165"><span class="lineNum">     165 </span>                :            :         external</a>
+<a name="166"><span class="lineNum">     166 </span>                :            :         nonReentrant</a>
+<a name="167"><span class="lineNum">     167 </span>                :            :         isNotPaused</a>
+<a name="168"><span class="lineNum">     168 </span>                :            :         onlyPayee(tokenId, payeeIndex)</a>
+<a name="169"><span class="lineNum">     169 </span>                :            :     {</a>
+<a name="170"><span class="lineNum">     170 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 4 times"> + </span>]:<span class="lineCov">          4 :         require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
+<a name="171"><span class="lineNum">     171 </span>                :<span class="lineCov">          4 :         address payee = _payee[tokenId][payeeIndex];</span></a>
+<a name="172"><span class="lineNum">     172 </span>                :<span class="lineCov">          4 :         uint256 amount = _accumulatedFunds[tokenId][payeeIndex];</span></a>
+<a name="173"><span class="lineNum">     173 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 4 times"> + </span>]:<span class="lineCov">          4 :         require(amount &gt; 0, &quot;No funds to release&quot;);</span></a>
 <a name="174"><span class="lineNum">     174 </span>                :            : </a>
-<a name="175"><span class="lineNum">     175 </span>                :            :         function nextSeason() external onlyOwner {</a>
-<a name="176"><span class="lineNum">     176 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 6 times"> + </span>]:<span class="lineCov">          6 :             require(currentSeason &lt; 4, &quot;All seasons have been activated&quot;);</span></a>
-<a name="177"><span class="lineNum">     177 </span>                :<span class="lineCov">          6 :             currentSeason++;</span></a>
-<a name="178"><span class="lineNum">     178 </span>                :<span class="lineCov">          6 :             emit SeasonChanged(currentSeason);</span></a>
-<a name="179"><span class="lineNum">     179 </span>                :            :         }</a>
+<a name="175"><span class="lineNum">     175 </span>                :<span class="lineCov">          4 :         _accumulatedFunds[tokenId][payeeIndex] = 0;</span></a>
+<a name="176"><span class="lineNum">     176 </span>                :<span class="lineCov">          4 :         _totalReceived[payee] += amount;</span></a>
+<a name="177"><span class="lineNum">     177 </span>                :<span class="lineCov">          4 :         payable(payee).transfer(amount);</span></a>
+<a name="178"><span class="lineNum">     178 </span>                :<span class="lineCov">          4 :         emit FundsReleased(tokenId, payee, amount);</span></a>
+<a name="179"><span class="lineNum">     179 </span>                :            :     }</a>
 <a name="180"><span class="lineNum">     180 </span>                :            : </a>
-<a name="181"><span class="lineNum">     181 </span>                :            :         function setMintPrice(uint256 price) external onlyOwner {</a>
-<a name="182"><span class="lineNum">     182 </span>                :<span class="lineCov">          2 :             mintPrice = price;</span></a>
-<a name="183"><span class="lineNum">     183 </span>                :<span class="lineCov">          2 :             emit MintPriceSet(price);</span></a>
-<a name="184"><span class="lineNum">     184 </span>                :            :         }</a>
-<a name="185"><span class="lineNum">     185 </span>                :            : </a>
-<a name="186"><span class="lineNum">     186 </span>                :            :         function setBulkBuyLimit(uint16 limit) external onlyOwner {</a>
-<a name="187"><span class="lineNum">     187 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 3 times"> + </span>]:<span class="lineCov">          3 :             require(limit &gt; 0, &quot;Limit cannot be zero&quot;);</span></a>
-<a name="188"><span class="lineNum">     188 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 3 times"> + </span>]:<span class="lineCov">          3 :             require(limit &lt;= 100, &quot;Limit cannot be more than 100&quot;);</span></a>
-<a name="189"><span class="lineNum">     189 </span>                :<span class="lineCov">          3 :             bulkBuyLimit = limit;</span></a>
-<a name="190"><span class="lineNum">     190 </span>                :<span class="lineCov">          3 :             emit BulkBuyLimitSet(limit);</span></a>
-<a name="191"><span class="lineNum">     191 </span>                :            :         }</a>
-<a name="192"><span class="lineNum">     192 </span>                :            : </a>
-<a name="193"><span class="lineNum">     193 </span>                :            :         function setBaseURI(string calldata newuri) external onlyOwner {</a>
-<a name="194"><span class="lineNum">     194 </span>                :<span class="lineCov">          2 :             _uri = newuri;</span></a>
-<a name="195"><span class="lineNum">     195 </span>                :<span class="lineCov">          2 :             emit BaseURIChanged(newuri);</span></a>
-<a name="196"><span class="lineNum">     196 </span>                :            :         }</a>
-<a name="197"><span class="lineNum">     197 </span>                :            : </a>
-<a name="198"><span class="lineNum">     198 </span>                :            :         function setBaseExtension(string calldata newExtension) external onlyOwner {</a>
-<a name="199"><span class="lineNum">     199 </span>                :<span class="lineCov">          2 :             _baseExtension = newExtension;</span></a>
-<a name="200"><span class="lineNum">     200 </span>                :<span class="lineCov">          2 :             emit BaseExtensionChanged(newExtension);</span></a>
-<a name="201"><span class="lineNum">     201 </span>                :            :         }</a>
-<a name="202"><span class="lineNum">     202 </span>                :            : </a>
-<a name="203"><span class="lineNum">     203 </span>                :            :         function togglePaused() external onlyOwner {</a>
-<a name="204"><span class="lineNum">     204 </span>                :<span class="lineCov">          3 :             isPaused = !isPaused;</span></a>
-<a name="205"><span class="lineNum">     205 </span>                :<span class="lineCov">          3 :             emit ChangedContractPausedState(isPaused);</span></a>
-<a name="206"><span class="lineNum">     206 </span>                :            :         }</a>
-<a name="207"><span class="lineNum">     207 </span>                :            : </a>
-<a name="208"><span class="lineNum">     208 </span>                :            :         function getPayees(uint256 tokenId) external view returns (address[2] memory) {</a>
-<a name="209"><span class="lineNum">     209 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :             require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
-<a name="210"><span class="lineNum">     210 </span>                :<span class="lineCov">         15 :             return _payee[tokenId];</span></a>
-<a name="211"><span class="lineNum">     211 </span>                :            :         }</a>
-<a name="212"><span class="lineNum">     212 </span>                :            : </a>
-<a name="213"><span class="lineNum">     213 </span>                :            :         function getShares(uint256 tokenId) external view returns (uint256[2] memory) {</a>
-<a name="214"><span class="lineNum">     214 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :             require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
-<a name="215"><span class="lineNum">     215 </span>                :<span class="lineCov">         15 :             return _shares[tokenId];</span></a>
-<a name="216"><span class="lineNum">     216 </span>                :            :         }</a>
+<a name="181"><span class="lineNum">     181 </span>                :            :     /// @notice Allows the owner to advanced the season ahead one.</a>
+<a name="182"><span class="lineNum">     182 </span>                :            :     function nextSeason() external onlyOwner {</a>
+<a name="183"><span class="lineNum">     183 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 6 times"> + </span>]:<span class="lineCov">          6 :         require(currentSeason &lt; 4, &quot;All seasons have been activated&quot;);</span></a>
+<a name="184"><span class="lineNum">     184 </span>                :<span class="lineCov">          6 :         currentSeason++;</span></a>
+<a name="185"><span class="lineNum">     185 </span>                :<span class="lineCov">          6 :         emit SeasonChanged(currentSeason);</span></a>
+<a name="186"><span class="lineNum">     186 </span>                :            :     }</a>
+<a name="187"><span class="lineNum">     187 </span>                :            : </a>
+<a name="188"><span class="lineNum">     188 </span>                :            :     /// @notice Allows the owner to set the mint price.</a>
+<a name="189"><span class="lineNum">     189 </span>                :            :     /// @param price The new mint price.</a>
+<a name="190"><span class="lineNum">     190 </span>                :            :     function setMintPrice(uint256 price) external onlyOwner {</a>
+<a name="191"><span class="lineNum">     191 </span>                :<span class="lineCov">          2 :         mintPrice = price;</span></a>
+<a name="192"><span class="lineNum">     192 </span>                :<span class="lineCov">          2 :         emit MintPriceSet(price);</span></a>
+<a name="193"><span class="lineNum">     193 </span>                :            :     }</a>
+<a name="194"><span class="lineNum">     194 </span>                :            : </a>
+<a name="195"><span class="lineNum">     195 </span>                :            :     /// @notice Allows the owner to set the bulk buy limit.</a>
+<a name="196"><span class="lineNum">     196 </span>                :            :     /// @param limit The new bulk buy limit.</a>
+<a name="197"><span class="lineNum">     197 </span>                :            :     function setBulkBuyLimit(uint16 limit) external onlyOwner {</a>
+<a name="198"><span class="lineNum">     198 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 3 times"> + </span>]:<span class="lineCov">          3 :         require(limit &gt; 0, &quot;Limit cannot be zero&quot;);</span></a>
+<a name="199"><span class="lineNum">     199 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 3 times"> + </span>]:<span class="lineCov">          3 :         require(limit &lt;= 100, &quot;Limit cannot be more than 100&quot;);</span></a>
+<a name="200"><span class="lineNum">     200 </span>                :<span class="lineCov">          3 :         bulkBuyLimit = limit;</span></a>
+<a name="201"><span class="lineNum">     201 </span>                :<span class="lineCov">          3 :         emit BulkBuyLimitSet(limit);</span></a>
+<a name="202"><span class="lineNum">     202 </span>                :            :     }</a>
+<a name="203"><span class="lineNum">     203 </span>                :            : </a>
+<a name="204"><span class="lineNum">     204 </span>                :            :     /// @notice Allows the owner to set the base URI.</a>
+<a name="205"><span class="lineNum">     205 </span>                :            :     /// @param newuri The new base URI.</a>
+<a name="206"><span class="lineNum">     206 </span>                :            :     function setBaseURI(string calldata newuri) external onlyOwner {</a>
+<a name="207"><span class="lineNum">     207 </span>                :<span class="lineCov">          2 :         _uri = newuri;</span></a>
+<a name="208"><span class="lineNum">     208 </span>                :<span class="lineCov">          2 :         emit BaseURIChanged(newuri);</span></a>
+<a name="209"><span class="lineNum">     209 </span>                :            :     }</a>
+<a name="210"><span class="lineNum">     210 </span>                :            : </a>
+<a name="211"><span class="lineNum">     211 </span>                :            :     /// @notice Allows the owner to set the base extension.</a>
+<a name="212"><span class="lineNum">     212 </span>                :            :     /// @param newExtension The new base extension.</a>
+<a name="213"><span class="lineNum">     213 </span>                :            :     function setBaseExtension(string calldata newExtension) external onlyOwner {</a>
+<a name="214"><span class="lineNum">     214 </span>                :<span class="lineCov">          2 :         _baseExtension = newExtension;</span></a>
+<a name="215"><span class="lineNum">     215 </span>                :<span class="lineCov">          2 :         emit BaseExtensionChanged(newExtension);</span></a>
+<a name="216"><span class="lineNum">     216 </span>                :            :     }</a>
 <a name="217"><span class="lineNum">     217 </span>                :            : </a>
-<a name="218"><span class="lineNum">     218 </span>                :            :         function getAccumulatedFunds(uint256 tokenId) external view returns (uint256[2] memory) {</a>
-<a name="219"><span class="lineNum">     219 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 52 times"> + </span>]:<span class="lineCov">         52 :             require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
-<a name="220"><span class="lineNum">     220 </span>                :<span class="lineCov">         52 :             return _accumulatedFunds[tokenId];</span></a>
-<a name="221"><span class="lineNum">     221 </span>                :            :         }</a>
-<a name="222"><span class="lineNum">     222 </span>                :            : </a>
-<a name="223"><span class="lineNum">     223 </span>                :            :         function totalReleasedToPayee(address payee) external view returns (uint256) {</a>
-<a name="224"><span class="lineNum">     224 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 4 times"> + </span>]:<span class="lineCov">          4 :             require(payee != address(0), &quot;Invalid address&quot;);</span></a>
-<a name="225"><span class="lineNum">     225 </span>                :<span class="lineCov">          4 :             return _totalReceived[payee];</span></a>
-<a name="226"><span class="lineNum">     226 </span>                :            :         }</a>
-<a name="227"><span class="lineNum">     227 </span>                :            : </a>
-<a name="228"><span class="lineNum">     228 </span>                :            :         function totalSupply(uint256 tokenId) external view returns (uint256) {</a>
-<a name="229"><span class="lineNum">     229 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 7 times"> + </span>]:<span class="lineCov">          7 :             require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
-<a name="230"><span class="lineNum">     230 </span>                :<span class="lineCov">          7 :             return _totalMinted[tokenId];</span></a>
-<a name="231"><span class="lineNum">     231 </span>                :            :         }</a>
-<a name="232"><span class="lineNum">     232 </span>                :            : </a>
-<a name="233"><span class="lineNum">     233 </span>                :            :         function isMintable(uint256 tokenId) external view returns (bool) {</a>
-<a name="234"><span class="lineNum">     234 </span>                :<span class="lineCov">        239 :             return _isMintable(tokenId);</span></a>
-<a name="235"><span class="lineNum">     235 </span>                :            :         }</a>
-<a name="236"><span class="lineNum">     236 </span>                :            : </a>
-<a name="237"><span class="lineNum">     237 </span>                :            :         function uri(uint256 tokenId)</a>
-<a name="238"><span class="lineNum">     238 </span>                :            :             public</a>
-<a name="239"><span class="lineNum">     239 </span>                :            :             view</a>
-<a name="240"><span class="lineNum">     240 </span>                :            :             virtual</a>
-<a name="241"><span class="lineNum">     241 </span>                :            :             override</a>
-<a name="242"><span class="lineNum">     242 </span>                :            :             returns (string memory)</a>
-<a name="243"><span class="lineNum">     243 </span>                :            :         {</a>
-<a name="244"><span class="lineNum">     244 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 4 times"> + </span>]:<span class="lineCov">          4 :             require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
-<a name="245"><span class="lineNum">     245 </span>                :<span class="lineCov">          4 :             return string(abi.encodePacked(_uri, Strings.toString(tokenId), _baseExtension));</span></a>
-<a name="246"><span class="lineNum">     246 </span>                :            :         }</a>
-<a name="247"><span class="lineNum">     247 </span>                :            : </a>
-<a name="248"><span class="lineNum">     248 </span>                :            :         function _isMintable(uint256 tokenId) private view returns (bool) {</a>
-<a name="249"><span class="lineNum">     249 </span>        [<span class="branchCov" title="Branch 0 was taken 60 times"> + </span><span class="branchCov" title="Branch 1 was taken 224 times"> + </span>]:<span class="lineCov">        284 :             if (currentSeason == 1 &amp;&amp; tokenId &lt;= seasonCardCounts[0]) {</span></a>
-<a name="250"><span class="lineNum">     250 </span>                :<span class="lineCov">         60 :                 return true;</span></a>
-<a name="251"><span class="lineNum">     251 </span>        [<span class="branchCov" title="Branch 0 was taken 29 times"> + </span><span class="branchCov" title="Branch 1 was taken 195 times"> + </span>]:<span class="lineCov">        224 :             } else if (currentSeason == 2 &amp;&amp; tokenId &lt;= seasonCardCounts[0] + seasonCardCounts[1]) {</span></a>
-<a name="252"><span class="lineNum">     252 </span>                :<span class="lineCov">         29 :                 return true;</span></a>
-<a name="253"><span class="lineNum">     253 </span>        [<span class="branchCov" title="Branch 0 was taken 43 times"> + </span><span class="branchCov" title="Branch 1 was taken 152 times"> + </span>]:<span class="lineCov">        195 :             } else if (currentSeason == 3 &amp;&amp; tokenId &lt;= seasonCardCounts[0] + seasonCardCounts[1] + seasonCardCounts[2]) {</span></a>
-<a name="254"><span class="lineNum">     254 </span>                :<span class="lineCov">         43 :                 return true;</span></a>
-<a name="255"><span class="lineNum">     255 </span>        [<span class="branchCov" title="Branch 0 was taken 56 times"> + </span><span class="branchCov" title="Branch 1 was taken 96 times"> + </span>]:<span class="lineCov">        152 :             } else if (currentSeason == 4 &amp;&amp; tokenId &lt;= MAX_CARDS - hiddenCardIds.length) {</span></a>
-<a name="256"><span class="lineNum">     256 </span>                :<span class="lineCov">         56 :                 return true;</span></a>
-<a name="257"><span class="lineNum">     257 </span>                :            :             } else {</a>
-<a name="258"><span class="lineNum">     258 </span>                :<span class="lineCov">         96 :                 for (uint8 i = 0; i &lt; hiddenCardIds.length; i++) {</span></a>
-<a name="259"><span class="lineNum">     259 </span>        [<span class="branchCov" title="Branch 0 was taken 16 times"> + </span><span class="branchCov" title="Branch 1 was taken 344 times"> + </span>]:<span class="lineCov">        360 :                     if (tokenId == hiddenCardIds[i]) {</span></a>
-<a name="260"><span class="lineNum">     260 </span>                :<span class="lineCov">         16 :                         return true;</span></a>
-<a name="261"><span class="lineNum">     261 </span>                :            :                     }</a>
-<a name="262"><span class="lineNum">     262 </span>                :            :                 }</a>
-<a name="263"><span class="lineNum">     263 </span>                :            :             }</a>
-<a name="264"><span class="lineNum">     264 </span>                :<span class="lineCov">         80 :             return false;</span></a>
-<a name="265"><span class="lineNum">     265 </span>                :            :         }</a>
-<a name="266"><span class="lineNum">     266 </span>                :            :         function _beforeTokenTransfer(</a>
-<a name="267"><span class="lineNum">     267 </span>                :            :             address operator,</a>
-<a name="268"><span class="lineNum">     268 </span>                :            :             address from,</a>
-<a name="269"><span class="lineNum">     269 </span>                :            :             address to,</a>
-<a name="270"><span class="lineNum">     270 </span>                :            :             uint256[] memory ids,</a>
-<a name="271"><span class="lineNum">     271 </span>                :            :             uint256[] memory amounts,</a>
-<a name="272"><span class="lineNum">     272 </span>                :            :             bytes memory data</a>
-<a name="273"><span class="lineNum">     273 </span>                :            :         ) internal override(ERC1155) isNotPaused {</a>
-<a name="274"><span class="lineNum">     274 </span>                :<span class="lineCov">         27 :             super._beforeTokenTransfer(operator, from, to, ids, amounts, data);</span></a>
-<a name="275"><span class="lineNum">     275 </span>                :            :         }</a>
-<a name="276"><span class="lineNum">     276 </span>                :            :     }</a>
+<a name="218"><span class="lineNum">     218 </span>                :            :     /// @notice Allows the owner to toggle the paused state of the contract.</a>
+<a name="219"><span class="lineNum">     219 </span>                :            :     /// @dev if contracts is paused transfers will be disabled.</a>
+<a name="220"><span class="lineNum">     220 </span>                :            :     function togglePaused() external onlyOwner {</a>
+<a name="221"><span class="lineNum">     221 </span>                :<span class="lineCov">          3 :         isPaused = !isPaused;</span></a>
+<a name="222"><span class="lineNum">     222 </span>                :<span class="lineCov">          3 :         emit ChangedContractPausedState(isPaused);</span></a>
+<a name="223"><span class="lineNum">     223 </span>                :            :     }</a>
+<a name="224"><span class="lineNum">     224 </span>                :            : </a>
+<a name="225"><span class="lineNum">     225 </span>                :            :     /// @notice Only owner function to pay out all accumulated funds to all payees.</a>
+<a name="226"><span class="lineNum">     226 </span>                :            :     /// @dev This function is only callable by the owner, and will pay out all accumulated funds to all payees.</a>
+<a name="227"><span class="lineNum">     227 </span>                :            :     function releaseToAllPayees() public onlyOwner nonReentrant isNotPaused {</a>
+<a name="228"><span class="lineNum">     228 </span>                :<span class="lineCov">          1 :         for (uint256 i = 1; i &lt;= MAX_CARDS; i++) {</span></a>
+<a name="229"><span class="lineNum">     229 </span>                :<span class="lineCov">         60 :             for (uint256 j = 0; j &lt; 2; j++) {</span></a>
+<a name="230"><span class="lineNum">     230 </span>                :<span class="lineCov">        120 :                 address payee = _payee[i][j];</span></a>
+<a name="231"><span class="lineNum">     231 </span>                :<span class="lineCov">        120 :                 uint256 amount = _accumulatedFunds[i][j];</span></a>
+<a name="232"><span class="lineNum">     232 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 8 times"> + </span>]:<span class="lineCov">        120 :                 if (amount &gt; 0) {</span></a>
+<a name="233"><span class="lineNum">     233 </span>                :<span class="lineCov">          8 :                     _accumulatedFunds[i][j] = 0;</span></a>
+<a name="234"><span class="lineNum">     234 </span>                :<span class="lineCov">          8 :                     _totalReceived[payee] += amount;</span></a>
+<a name="235"><span class="lineNum">     235 </span>                :<span class="lineCov">          8 :                     payable(payee).transfer(amount);</span></a>
+<a name="236"><span class="lineNum">     236 </span>                :<span class="lineCov">          8 :                     emit FundsReleased(i, payee, amount);</span></a>
+<a name="237"><span class="lineNum">     237 </span>                :            :                 }</a>
+<a name="238"><span class="lineNum">     238 </span>                :            :             }</a>
+<a name="239"><span class="lineNum">     239 </span>                :            :         }</a>
+<a name="240"><span class="lineNum">     240 </span>                :            :     }</a>
+<a name="241"><span class="lineNum">     241 </span>                :            : </a>
+<a name="242"><span class="lineNum">     242 </span>                :            :     /// @notice Gets the payees addresses for a given tokenId.</a>
+<a name="243"><span class="lineNum">     243 </span>                :            :     /// @param tokenId The ID of the card to fetch.</a>
+<a name="244"><span class="lineNum">     244 </span>                :            :     /// @return An array containing the addresses of the payees.</a>
+<a name="245"><span class="lineNum">     245 </span>                :            :     function getPayees(uint256 tokenId) external view returns (address[2] memory) {</a>
+<a name="246"><span class="lineNum">     246 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :         require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
+<a name="247"><span class="lineNum">     247 </span>                :<span class="lineCov">         15 :         return _payee[tokenId];</span></a>
+<a name="248"><span class="lineNum">     248 </span>                :            :     }</a>
+<a name="249"><span class="lineNum">     249 </span>                :            : </a>
+<a name="250"><span class="lineNum">     250 </span>                :            :     /// @notice Gets the shares for a given tokenId.</a>
+<a name="251"><span class="lineNum">     251 </span>                :            :     /// @param tokenId The ID of the card to fetch.</a>
+<a name="252"><span class="lineNum">     252 </span>                :            :     /// @return An array containing the shares of each payee.</a>
+<a name="253"><span class="lineNum">     253 </span>                :            :     function getShares(uint256 tokenId) external view returns (uint256[2] memory) {</a>
+<a name="254"><span class="lineNum">     254 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 15 times"> + </span>]:<span class="lineCov">         15 :         require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
+<a name="255"><span class="lineNum">     255 </span>                :<span class="lineCov">         15 :         return _shares[tokenId];</span></a>
+<a name="256"><span class="lineNum">     256 </span>                :            :     }</a>
+<a name="257"><span class="lineNum">     257 </span>                :            : </a>
+<a name="258"><span class="lineNum">     258 </span>                :            :     /// @notice Gets the accumulated funds for a given tokenId.</a>
+<a name="259"><span class="lineNum">     259 </span>                :            :     /// @param tokenId The ID of the card to fetch.</a>
+<a name="260"><span class="lineNum">     260 </span>                :            :     /// @return An array containing the accumulated funds for each payee for the given tokenId.</a>
+<a name="261"><span class="lineNum">     261 </span>                :            :     function getAccumulatedFunds(uint256 tokenId) external view returns (uint256[2] memory) {</a>
+<a name="262"><span class="lineNum">     262 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 64 times"> + </span>]:<span class="lineCov">         64 :         require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
+<a name="263"><span class="lineNum">     263 </span>                :<span class="lineCov">         64 :         return _accumulatedFunds[tokenId];</span></a>
+<a name="264"><span class="lineNum">     264 </span>                :            :     }</a>
+<a name="265"><span class="lineNum">     265 </span>                :            : </a>
+<a name="266"><span class="lineNum">     266 </span>                :            :     /// @notice Gets the total funds released to a given payee.</a>
+<a name="267"><span class="lineNum">     267 </span>                :            :     /// @param payee The address of the payee to fetch total funds released.</a>
+<a name="268"><span class="lineNum">     268 </span>                :            :     /// @return The total funds released to the given payee.</a>
+<a name="269"><span class="lineNum">     269 </span>                :            :     function totalReleasedToPayee(address payee) external view returns (uint256) {</a>
+<a name="270"><span class="lineNum">     270 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 8 times"> + </span>]:<span class="lineCov">          8 :         require(payee != address(0), &quot;Invalid address&quot;);</span></a>
+<a name="271"><span class="lineNum">     271 </span>                :<span class="lineCov">          8 :         return _totalReceived[payee];</span></a>
+<a name="272"><span class="lineNum">     272 </span>                :            :     }</a>
+<a name="273"><span class="lineNum">     273 </span>                :            : </a>
+<a name="274"><span class="lineNum">     274 </span>                :            :     /// @notice Gets the total supply of a given tokenId.</a>
+<a name="275"><span class="lineNum">     275 </span>                :            :     /// @param tokenId The ID of the card to fetch.</a>
+<a name="276"><span class="lineNum">     276 </span>                :            :     function totalSupply(uint256 tokenId) external view returns (uint256) {</a>
+<a name="277"><span class="lineNum">     277 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 7 times"> + </span>]:<span class="lineCov">          7 :         require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
+<a name="278"><span class="lineNum">     278 </span>                :<span class="lineCov">          7 :         return _totalMinted[tokenId];</span></a>
+<a name="279"><span class="lineNum">     279 </span>                :            :     }</a>
+<a name="280"><span class="lineNum">     280 </span>                :            : </a>
+<a name="281"><span class="lineNum">     281 </span>                :            :     /// @notice Checks if a tokenId is currently mintable</a>
+<a name="282"><span class="lineNum">     282 </span>                :            :     /// @param tokenId The ID of the card to check.</a>
+<a name="283"><span class="lineNum">     283 </span>                :            :     /// @return A boolean indicating if the card is mintable.</a>
+<a name="284"><span class="lineNum">     284 </span>                :            :     function isMintable(uint256 tokenId) external view returns (bool) {</a>
+<a name="285"><span class="lineNum">     285 </span>                :<span class="lineCov">        241 :         return _isMintable(tokenId);</span></a>
+<a name="286"><span class="lineNum">     286 </span>                :            :     }</a>
+<a name="287"><span class="lineNum">     287 </span>                :            : </a>
+<a name="288"><span class="lineNum">     288 </span>                :            :     /// @notice Gets a tokenIds URI.</a>
+<a name="289"><span class="lineNum">     289 </span>                :            :     /// @param tokenId The ID of the card to fetch.</a>
+<a name="290"><span class="lineNum">     290 </span>                :            :     /// @return A string containing the URI of the given tokenId.</a>
+<a name="291"><span class="lineNum">     291 </span>                :            :     function uri(uint256 tokenId) public view virtual override returns (string memory) {</a>
+<a name="292"><span class="lineNum">     292 </span>        [<span class="branchNoExec" title="Branch 0 was not executed"> # </span><span class="branchCov" title="Branch 1 was taken 4 times"> + </span>]:<span class="lineCov">          4 :         require(tokenId &gt;= 1 &amp;&amp; tokenId &lt;= MAX_CARDS, &quot;Invalid tokenId&quot;);</span></a>
+<a name="293"><span class="lineNum">     293 </span>                :<span class="lineCov">          4 :         return string(abi.encodePacked(_uri, Strings.toString(tokenId), _baseExtension));</span></a>
+<a name="294"><span class="lineNum">     294 </span>                :            :     }</a>
+<a name="295"><span class="lineNum">     295 </span>                :            : </a>
+<a name="296"><span class="lineNum">     296 </span>                :            :     /// @notice internal function to check if a tokenId is mintable</a>
+<a name="297"><span class="lineNum">     297 </span>                :            :     /// @param tokenId The ID of the card to check.</a>
+<a name="298"><span class="lineNum">     298 </span>                :            :     /// @dev This function is used by the public isMintable, mint, mintBatch functions.</a>
+<a name="299"><span class="lineNum">     299 </span>                :            :     /// @return A boolean indicating if the card is mintable.</a>
+<a name="300"><span class="lineNum">     300 </span>                :            :     function _isMintable(uint256 tokenId) internal view returns (bool) {</a>
+<a name="301"><span class="lineNum">     301 </span>        [<span class="branchCov" title="Branch 0 was taken 60 times"> + </span><span class="branchCov" title="Branch 1 was taken 226 times"> + </span>]:<span class="lineCov">        286 :         if (currentSeason == 1 &amp;&amp; tokenId &lt;= seasonCardCounts[0]) {</span></a>
+<a name="302"><span class="lineNum">     302 </span>                :<span class="lineCov">         60 :             return true;</span></a>
+<a name="303"><span class="lineNum">     303 </span>        [<span class="branchCov" title="Branch 0 was taken 30 times"> + </span><span class="branchCov" title="Branch 1 was taken 196 times"> + </span>]:<span class="lineCov">        226 :         } else if (currentSeason == 2 &amp;&amp; tokenId &lt;= seasonCardCounts[0] + seasonCardCounts[1]) {</span></a>
+<a name="304"><span class="lineNum">     304 </span>                :<span class="lineCov">         30 :             return true;</span></a>
+<a name="305"><span class="lineNum">     305 </span>        [<span class="branchCov" title="Branch 0 was taken 45 times"> + </span><span class="branchCov" title="Branch 1 was taken 151 times"> + </span>]:<span class="lineCov">        196 :         } else if (currentSeason == 3 &amp;&amp; tokenId &lt;= seasonCardCounts[0] + seasonCardCounts[1] + seasonCardCounts[2]) {</span></a>
+<a name="306"><span class="lineNum">     306 </span>                :<span class="lineCov">         45 :             return true;</span></a>
+<a name="307"><span class="lineNum">     307 </span>        [<span class="branchCov" title="Branch 0 was taken 60 times"> + </span><span class="branchCov" title="Branch 1 was taken 91 times"> + </span>]:<span class="lineCov">        151 :         } else if (currentSeason == 4 &amp;&amp; tokenId &lt;= MAX_CARDS) {</span></a>
+<a name="308"><span class="lineNum">     308 </span>                :<span class="lineCov">         60 :             return true;</span></a>
+<a name="309"><span class="lineNum">     309 </span>                :            :         }</a>
+<a name="310"><span class="lineNum">     310 </span>                :<span class="lineCov">         91 :         return false;</span></a>
+<a name="311"><span class="lineNum">     311 </span>                :            :     }</a>
+<a name="312"><span class="lineNum">     312 </span>                :            : </a>
+<a name="313"><span class="lineNum">     313 </span>                :            :     /// @notice internal function that runs before a token transfer.</a>
+<a name="314"><span class="lineNum">     314 </span>                :            :     /// @param operator The address of the operator.</a>
+<a name="315"><span class="lineNum">     315 </span>                :            :     /// @param from The address of the sender.</a>
+<a name="316"><span class="lineNum">     316 </span>                :            :     /// @param to The address of the receiver.</a>
+<a name="317"><span class="lineNum">     317 </span>                :            :     /// @param ids The ID of the card to transfer.</a>
+<a name="318"><span class="lineNum">     318 </span>                :            :     /// @param amounts The amount of the card to transfer.</a>
+<a name="319"><span class="lineNum">     319 </span>                :            :     /// @param data Any additional data to send with the transfer.</a>
+<a name="320"><span class="lineNum">     320 </span>                :            :     /// @dev This function is used by the public safeTransferFrom, safeBatchTransferFrom, transferFrom functions.</a>
+<a name="321"><span class="lineNum">     321 </span>                :            :     /// @dev This function will revert if the contract is paused.</a>
+<a name="322"><span class="lineNum">     322 </span>                :            :     function _beforeTokenTransfer(</a>
+<a name="323"><span class="lineNum">     323 </span>                :            :         address operator,</a>
+<a name="324"><span class="lineNum">     324 </span>                :            :         address from,</a>
+<a name="325"><span class="lineNum">     325 </span>                :            :         address to,</a>
+<a name="326"><span class="lineNum">     326 </span>                :            :         uint256[] memory ids,</a>
+<a name="327"><span class="lineNum">     327 </span>                :            :         uint256[] memory amounts,</a>
+<a name="328"><span class="lineNum">     328 </span>                :            :         bytes memory data</a>
+<a name="329"><span class="lineNum">     329 </span>                :            :     ) internal override(ERC1155) isNotPaused {</a>
+<a name="330"><span class="lineNum">     330 </span>                :<span class="lineCov">         27 :         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);</span></a>
+<a name="331"><span class="lineNum">     331 </span>                :            :     }</a>
+<a name="332"><span class="lineNum">     332 </span>                :            : }</a>
 </pre>
       </td>
     </tr>

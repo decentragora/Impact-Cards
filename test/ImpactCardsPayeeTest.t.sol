@@ -174,4 +174,42 @@ contract ImpactCardTest is Test {
         assertEq(cards.getAccumulatedFunds(5)[0], agoraBalance[2]);
         assertEq(cards.getAccumulatedFunds(10)[0], agoraBalance[3]);
     }
+
+    function testOwnerReleasePaymentForPayees() public {
+        uint256[] memory agoraBalance = new uint256[](4);
+        agoraBalance[0] = cards.getAccumulatedFunds(1)[0];
+        agoraBalance[1] = cards.getAccumulatedFunds(2)[0];
+        agoraBalance[2] = cards.getAccumulatedFunds(5)[0];
+        agoraBalance[3] = cards.getAccumulatedFunds(10)[0];
+        uint256[] memory idBalances = new uint256[](4);
+        idBalances[0] = cards.getAccumulatedFunds(1)[1];
+        idBalances[1] = cards.getAccumulatedFunds(2)[1];
+        idBalances[2] = cards.getAccumulatedFunds(5)[1];
+        idBalances[3] = cards.getAccumulatedFunds(10)[1];
+        vm.startPrank(dAgoraTreasury);
+            cards.releaseToAllPayees();
+        vm.stopPrank();
+
+        assertEq(cards.getAccumulatedFunds(1)[1], 0);
+        assertEq(cards.getAccumulatedFunds(2)[1], 0);
+        assertEq(cards.getAccumulatedFunds(5)[1], 0);
+        assertEq(cards.getAccumulatedFunds(10)[1], 0);
+
+        uint256 agBalance = address(ag).balance;
+        uint256 erBalance = address(er).balance;
+        uint256 koBalance = address(ko).balance;
+        uint256 zxBalance = address(zx).balance;
+
+        assertEq(agBalance, cards.totalReleasedToPayee(ag), "ag balance should be 12500000000000000");
+        assertEq(erBalance, cards.totalReleasedToPayee(er), "er balance should be 7500000000000000");
+        assertEq(koBalance, cards.totalReleasedToPayee(ko));
+        assertEq(zxBalance, cards.totalReleasedToPayee(zx));
+    }
+
+    function testFailNotOwnerReleasePaymentForAll() public {
+        vm.startPrank(alice);
+            cards.releaseToAllPayees();
+            vm.expectRevert();
+        vm.stopPrank();
+    }
 }
