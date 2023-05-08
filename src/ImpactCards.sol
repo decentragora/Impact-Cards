@@ -229,6 +229,7 @@ contract ImpactCards_Gen1 is ERC1155, Ownable, ReentrancyGuard {
             for (uint256 j = 0; j < 2; j++) {
                 address payee = _payee[i][j];
                 uint256 amount = _accumulatedFunds[i][j];
+                if (payee == address(0)) continue;
                 if (amount > 0) {
                     _accumulatedFunds[i][j] = 0;
                     _totalReceived[payee] += amount;
